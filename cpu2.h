@@ -1,7 +1,7 @@
 /*
  * This implements CPU2: a CPU emulation based on CPU1 (see cpu1.h) but with
  * some "enhancements":
- *   - 4 registers (A, B, C, D) instead of only A
+ *   - 4 registers (A, B, C, D) instead of only A (and hidden B)
  *   - Access to 256 bytes of RAM
  *   - To access all RAM many instructions are now multy-byte
  */
@@ -26,7 +26,7 @@ private:
     ,   R_MAR
     ,   R_RAM
     ,   R_TMP
-    ,   R_ADDER
+    ,   R_ALU
     ,   R_OUT
     ,   R_A
     ,   R_B
@@ -77,11 +77,11 @@ private:
 
     /****************************************************************************
      * ALU - Arithmetic & Logical Unit. Now only Add & Subtract
-     *       Connected to A, B and F registers
+     *       Connected to A, TMP and F registers
      ****************************************************************************/
     class Alu : public Register {
     private:
-        Register &A, &B;
+        Register &A, &TMP;
         FlagsRegister &F;
         char oper;
     public:
@@ -91,7 +91,7 @@ private:
         Alu (InternalBus &bus, Register &_A, Register &_B, FlagsRegister &_F)
             : Register (bus)
             , A(_A)
-            , B(_B)
+            , TMP(_B)
             , F(_F)
         {
             oper = OpNone;
@@ -108,10 +108,10 @@ private:
 
             switch (oper) {
             case OpAdd:
-                result = A.get () + B.get ();
+                result = A.get () + TMP.get ();
                 break;
             case OpSub:
-                result = A.get () - B.get ();
+                result = A.get () - TMP.get ();
                 break;
             };
 
@@ -143,13 +143,11 @@ private:
         char clock_pc;
         char oper;
         char halt;
-        char carry;
-        char zero;
         char cond;
         char end_instr;
     };
 
-    Register A, B, C, D;
+    Register TMP, A, B, C, D;
     RamRegister RAM;
     MemAddrRegister MAR;
     Alu ALU;
@@ -175,6 +173,11 @@ private:
     struct MicroInstruction *initMicroInstruction (const struct MicroInstruction *_inst);
 
     /*
+     * Initialize register array
+     */
+    void initRegisters (void);
+
+    /*
      * Initialize Microcode
      */
     void initMicroInstructions (void);
@@ -192,7 +195,7 @@ private:
     /*
      * Debugging output at microcode_level
      */
-    void debug_microcode (const struct MicroInstruction *ip, unsigned char regid) const;
+    void debug_microcode (const struct MicroInstruction *ip, unsigned char ir) const;
 
     inline unsigned char map_reg (unsigned char reg, unsigned char regid) const
     {
@@ -204,7 +207,7 @@ private:
     /*
      * Execute one microcode instruction
      */
-    int execute_microcode(const struct MicroInstruction *ip, unsigned char regid, int debug_level);
+    int execute_microcode(const struct MicroInstruction *ip, unsigned char ir, int debug_level);
 
 public:
     /*
@@ -214,33 +217,14 @@ public:
         : CPU (_ram)
         , RAM (bus, 256, _ram)
         , MAR (bus, RAM)
+        , TMP (bus)
         , A (bus)
         , B (bus)
         , C (bus)
         , D (bus)
-        , ALU (bus, A, B, F)
+        , ALU (bus, A, TMP, F)
     {
-        registers[R_PC]    = &PC;
-        registers[R_IR]    = &IR;
-        registers[R_MAR]   = &MAR;
-        registers[R_RAM]   = &RAM;
-        registers[R_TMP]   = &B;
-        registers[R_ADDER] = &ALU;
-        registers[R_OUT]   = &OUT;
-        registers[R_A]     = &A;
-        registers[R_B]     = &B;
-        registers[R_C]     = &C;
-        registers[R_D]     = &D;
-/*
-        micro_ptr = 0;
-
-        PC.reset ();
-        IR.reset ();
-
-        halted = 0;
-*/
-
-
+        initRegisters ();
         initMicroInstructions ();
     };
 

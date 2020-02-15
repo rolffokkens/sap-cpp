@@ -12,24 +12,24 @@ const struct CPU2::MicroInstruction CPU2::inst_nop[] = {
 };
 
 const struct CPU2::MicroInstruction CPU2::inst_ld[] = {
-        {.enable    = R_PC,    .load      = R_MAR,  .clock_pc  = 1                 }
-,       {.enable    = R_RAM,   .load      = R_MAR                                  }
+        {.enable    = R_PC,    .load      = R_MAR                                  }
+,       {.enable    = R_RAM,   .load      = R_MAR,  .clock_pc  = 1                 }
 ,       {.enable    = R_RAM,   .load      = R_ANY,                  .end_instr = 1 }
 };
 
 const struct CPU2::MicroInstruction CPU2::inst_add[] = {
         {.enable    = R_ANY,   .load      = R_TMP,  .oper = Alu::OpAdd             }
-,       {.enable    = R_ADDER, .load      = R_A,                    .end_instr = 1 }
+,       {.enable    = R_ALU,   .load      = R_A,                    .end_instr = 1 }
 };
 
 const struct CPU2::MicroInstruction CPU2::inst_sub[] = {
         {.enable    = R_ANY,   .load      = R_TMP,  .oper = Alu::OpSub             }
-,       {.enable    = R_ADDER, .load      = R_A,                    .end_instr = 1 }
+,       {.enable    = R_ALU,   .load      = R_A,                    .end_instr = 1 }
 };
 
 const struct CPU2::MicroInstruction CPU2::inst_st[] = {
-        {.enable    = R_PC,    .load      = R_MAR,  .clock_pc  = 1                 }
-,       {.enable    = R_RAM,   .load      = R_MAR                                  }
+        {.enable    = R_PC,    .load      = R_MAR                                  }
+,       {.enable    = R_RAM,   .load      = R_MAR,  .clock_pc  = 1                 }
 ,       {.enable    = R_ANY,   .load      = R_RAM,                  .end_instr = 1 }
 };
 
@@ -39,7 +39,8 @@ const struct CPU2::MicroInstruction CPU2::inst_ldi[] = {
 };
 
 const struct CPU2::MicroInstruction CPU2::inst_jmp[] = {
-        {.enable    = R_PC,    .load      = R_MAR,  .clock_pc  = 1                 }
+        {.enable    = R_PC,    .load      = R_MAR,                                 }
+,       {                                           .clock_pc  = 1                 }
 ,       {.enable    = R_RAM,   .load      = R_PC,   .cond = 1                      }
 ,       {                                                           .end_instr = 1 }
 };
@@ -94,6 +95,21 @@ const CPU2::InstructionInfo CPU2::instruction_info[] = {
 ,   { "HLT", 0, 0, 0 }
 };
 
+void CPU2::initRegisters (void)
+{
+    registers[R_PC]  = &PC;
+    registers[R_IR]  = &IR;
+    registers[R_MAR] = &MAR;
+    registers[R_RAM] = &RAM;
+    registers[R_TMP] = &TMP;
+    registers[R_ALU] = &ALU;
+    registers[R_OUT] = &OUT;
+    registers[R_A]   = &A;
+    registers[R_B]   = &B;
+    registers[R_C]   = &C;
+    registers[R_D]   = &D;
+};
+
 void CPU2::initMicroInstructions (void)
 {
     instructions[I_NOP] = initMicroInstruction (inst_nop);
@@ -117,13 +133,16 @@ void CPU2::initMicroInstructions (void)
 void CPU2::dump_registers (const char *prefix, int internal) const
 {
     int i;
+    char Z, C;
+
+    F.get (Z, C);
 
     cout << prefix;
     for (i = 1; i < R_NUM; i++) {
-        if (internal != register_info[i].internal) continue;
+        if (!internal && register_info[i].internal) continue;
         cout << boost::format("%s:%02X ") % register_info[i].name % int(registers[i]->get());
     }
-    cout << flush;
+    cout <<  "c:" << int(C) <<  " z:" << int(Z) << " ";
 };
 
 void CPU2::map_cond (unsigned char data, char &zero, char &carry, const char *&name) const
@@ -179,7 +198,7 @@ void CPU2::debug (int addr) const
     cout << endl;
 };
 
-void CPU2::debug_microcode (const struct MicroInstruction *ip, unsigned char regid) const
+void CPU2::debug_microcode (const struct MicroInstruction *ip, unsigned char ir) const
 {
     char Z, C;
     unsigned char reg;
@@ -188,15 +207,13 @@ void CPU2::debug_microcode (const struct MicroInstruction *ip, unsigned char reg
 
     dump_registers ("   » ", 1);
     cout <<  "BUS:" << boost::format("%02X") % int (bus.read ())
-         <<  ", C:"   << int(C)
-         <<  ", Z:"   << int(Z)
          <<  boost::format("  [%02X]") % int(micro_ptr);
     if (ip->enable) {
-        reg = map_reg (ip->enable, regid);
+        reg = map_reg (ip->enable, ir & 0x03);
         cout <<  boost::format(" enable:%-3s") % register_info[reg].name;
     }
     if (ip->load) {
-        reg = map_reg (ip->load, regid);
+        reg = map_reg (ip->load,   ir & 0x03);
         cout <<  boost::format(" load:%-3s") % register_info[reg].name;
     }
     if (ip->clock_pc) {
@@ -205,11 +222,11 @@ void CPU2::debug_microcode (const struct MicroInstruction *ip, unsigned char reg
     if (ip->oper) {
         cout <<  " operation:" << Alu::OpNames[ip->oper];
     }
-    if (ip->carry) {
-        cout <<  " C=" << (ip->carry-1);
-    }
-    if (ip->zero) {
-        cout <<  " Z=" << (ip->zero-1);
+    if (ip->cond) {
+        const char *name;
+        char zero, carry;
+        map_cond (ir & 0x07, zero, carry, name);
+        if (name) cout << " [" << name << "]";
     }
     if (ip->halt) {
         cout <<  " HALT";
@@ -241,7 +258,7 @@ struct CPU2::MicroInstruction *CPU2::initMicroInstruction (const struct CPU2::Mi
 /*
  * Execute one microcode instruction
  */
-int CPU2::execute_microcode(const struct MicroInstruction *ip, unsigned char regid, int debug_level)
+int CPU2::execute_microcode(const struct MicroInstruction *ip, unsigned char ir, int debug_level)
 {
     char Z,    C;
     char zero, carry;
@@ -249,23 +266,22 @@ int CPU2::execute_microcode(const struct MicroInstruction *ip, unsigned char reg
     F.get (Z, C);
 
     if (debug_level && !micro_ptr) debug (PC.get ());
-    if (debug_level >= 2) debug_microcode (ip, regid);
+    if (debug_level >= 2) debug_microcode (ip, ir);
 
     if (ip->cond) {
         const char *name;
-        map_cond (IR.get (), zero, carry, name);
+        map_cond (ir & 0x07, zero, carry, name);
     } else {
-        /* Obsolete? */
-        zero  = ip->zero;
-        carry = ip->carry;
+        zero  = FLAG_NONE;
+        carry = FLAG_NONE;
     }
 
     if (carry && C != carry -1) return 0;
     if (zero  && Z != zero  -1) return 0;
 
     if (ip->oper)      ALU.SetOperation (ip->oper);
-    if (ip->enable)    registers[map_reg (ip->enable, regid)]->enable ();
-    if (ip->load)      registers[map_reg (ip->load,   regid)]->load ();
+    if (ip->enable)    registers[map_reg (ip->enable, ir & 0x03)]->enable ();
+    if (ip->load)      registers[map_reg (ip->load,   ir & 0x03)]->load ();
     if (ip->clock_pc)  PC.clock ();
     if (ip->halt)      halted = 1;
 
@@ -279,7 +295,7 @@ int CPU2::clock (int debug_level)
 
     ip = instructions[(ir >> 4) & 0xf] + micro_ptr;
 
-    if (execute_microcode(ip, ir & 0x03, debug_level)) {
+    if (execute_microcode(ip, ir, debug_level)) {
         micro_ptr = 0;
     } else {
         micro_ptr++;
