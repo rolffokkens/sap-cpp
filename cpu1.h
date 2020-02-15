@@ -31,7 +31,7 @@ private:
     ,   R_MAR
     ,   R_RAM
     ,   R_A
-    ,   R_B
+    ,   R_TMP
     ,   R_ADDER
     ,   R_OUT
     ,   R_NUM
@@ -80,7 +80,7 @@ private:
      ****************************************************************************/
     class Alu : public Register {
     private:
-        Register &A, &B;
+        Register &A, &TMP;
         FlagsRegister &F;
         char oper;
     public:
@@ -90,7 +90,7 @@ private:
         Alu (InternalBus &bus, Register &_A, Register &_B, FlagsRegister &_F)
             : Register (bus)
             , A(_A)
-            , B(_B)
+            , TMP(_B)
             , F(_F)
         {
             oper = OpNone;
@@ -107,10 +107,10 @@ private:
 
             switch (oper) {
             case OpAdd:
-                result = A.get () + B.get ();
+                result = A.get () + TMP.get ();
                 break;
             case OpSub:
-                result = A.get () - B.get ();
+                result = A.get () - TMP.get ();
                 break;
             };
 
@@ -146,7 +146,7 @@ private:
         char end_instr;
     };
 
-    Register A, B;
+    Register A, TMP;
     RamRegister RAM;
     MemAddrRegister MAR;
     Alu ALU;
@@ -204,16 +204,16 @@ public:
         : CPU (_ram)
         , RAM (bus, 16, _ram)
         , MAR (bus, RAM)
+        , TMP (bus)
         , A (bus)
-        , B (bus)
-        , ALU (bus, A, B, F)
+        , ALU (bus, A, TMP, F)
     {
         registers[R_PC]    = &PC;
         registers[R_IR]    = &IR;
         registers[R_MAR]   = &MAR;
         registers[R_RAM]   = &RAM;
         registers[R_A]     = &A;
-        registers[R_B]     = &B;
+        registers[R_TMP]   = &TMP;
         registers[R_ADDER] = &ALU;
         registers[R_OUT]   = &OUT;
 

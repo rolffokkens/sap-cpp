@@ -18,13 +18,13 @@ const struct CPU1::MicroInstruction CPU1::inst_lda[] = {
 
 const struct CPU1::MicroInstruction CPU1::inst_add[] = {
         {.enable    = R_IR,    .load      = R_MAR                           }
-    ,   {.enable    = R_RAM,   .load      = R_B,     .oper = Alu::OpAdd     }
+    ,   {.enable    = R_RAM,   .load      = R_TMP,   .oper = Alu::OpAdd     }
     ,   {.enable    = R_ADDER, .load      = R_A,     .end_instr = 1         }
 };
 
 const struct CPU1::MicroInstruction CPU1::inst_sub[] = {
         {.enable    = R_IR,    .load      = R_MAR                           }
-    ,   {.enable    = R_RAM,   .load      = R_B,     .oper = Alu::OpSub     }
+    ,   {.enable    = R_RAM,   .load      = R_TMP,   .oper = Alu::OpSub     }
     ,   {.enable    = R_ADDER, .load      = R_A,     .end_instr = 1         }
 };
 
@@ -66,7 +66,7 @@ const CPU1::RegisterInfo CPU1::register_info[] = {
 ,   {1, "MAR"}
 ,   {1, "RAM"}
 ,   {0, "A"}
-,   {0, "B"}
+,   {1, "TMP"}
 ,   {1, "ALU"}
 ,   {1, "OUT"}
 };
@@ -113,12 +113,16 @@ void CPU1::initMicroInstructions (void)
 void CPU1::dump_registers (const char *prefix, int internal) const
 {
     int i;
+    char Z, C;
+
+    F.get (Z, C);
 
     cout << prefix;
     for (i = 1; i < R_NUM; i++) {
-        if (internal != register_info[i].internal) continue;
+        if (!internal && register_info[i].internal) continue;
         cout << boost::format("%s:%02X ") % register_info[i].name % int(registers[i]->get());
     }
+    cout <<  "c:" << int(C) <<  " z:" << int(Z) << " ";
 };
 
 void CPU1::debug (int addr) const
@@ -145,8 +149,6 @@ void CPU1::debug_microcode (const struct MicroInstruction *ip) const
 
     dump_registers ("   » ", 1);
     cout <<  "BUS:" << boost::format("%02X") % int (bus.read ())
-         <<  ", C:"   << int(C)
-         <<  ", Z:"   << int(Z)
          <<  boost::format("  [%02X]") % int(micro_ptr);
     if (ip->enable) {
         cout <<  boost::format(" enable:%-3s") % register_info[ip->enable].name;
