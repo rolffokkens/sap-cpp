@@ -28,6 +28,7 @@ private:
     ,   R_TMP
     ,   R_ALU
     ,   R_OUT
+    ,   R_SP
     ,   R_A
     ,   R_B
     ,   R_C
@@ -47,20 +48,20 @@ private:
     static const RegisterInfo register_info[R_NUM];
 
     enum InstructionID {
-        I_NOP = 0
-    ,   I_LD
+        I_LD  = 0
     ,   I_ADD
     ,   I_SUB
     ,   I_ST
-    ,   I_LDI
+    ,   I_SET
     ,   I_JMP
     ,   I_LDA
     ,   I_STA
-    ,   I_R09
-    ,   I_R0A
-    ,   I_R0B
-    ,   I_R0C
+    ,   I_LDI
+    ,   I_STI
+    ,   I_PSH
+    ,   I_POP
     ,   I_R0D
+    ,   I_R0E
     ,   I_OUT
     ,   I_HLT
     ,   I_NUM
@@ -129,7 +130,8 @@ private:
      * One micocode instruction:
      * - enable:    register to pass data to   the internal bus
      * - load:      register to get  data from the internal bus
-     * - clock_pc:  Clock (Increment) the PC
+     * - clock_pc:  Clock (Inc/Dec) the PC
+     * - clock_sp:  Clock (Inc/Dec) the SP
      * - oper:      specify ALU operation
      * - halt:      stop execution
      * - carry:     requirement for C: FLAG_NONE, FLAG_0 or FLAG_1
@@ -141,6 +143,7 @@ private:
         char enable;
         char load;
         char clock_pc;
+        char clock_sp;
         char oper;
         char halt;
         char cond;
@@ -148,6 +151,7 @@ private:
     };
 
     Register TMP, A, B, C, D;
+    Counter SP;
     RamRegister RAM;
     MemAddrRegister MAR;
     Alu ALU;
@@ -156,15 +160,18 @@ private:
     Register *registers[R_NUM];
 
     static const struct MicroInstruction prefix[];
-    static const struct MicroInstruction inst_nop[];
     static const struct MicroInstruction inst_ld[];
     static const struct MicroInstruction inst_add[];
     static const struct MicroInstruction inst_sub[];
     static const struct MicroInstruction inst_st[];
-    static const struct MicroInstruction inst_ldi[];
+    static const struct MicroInstruction inst_set[];
     static const struct MicroInstruction inst_jmp[];
     static const struct MicroInstruction inst_lda[];
     static const struct MicroInstruction inst_sta[];
+    static const struct MicroInstruction inst_ldi[];
+    static const struct MicroInstruction inst_sti[];
+    static const struct MicroInstruction inst_psh[];
+    static const struct MicroInstruction inst_pop[];
     static const struct MicroInstruction inst_out[];
     static const struct MicroInstruction inst_hlt[];
 
@@ -199,9 +206,10 @@ private:
 
     inline unsigned char map_reg (unsigned char reg, unsigned char regid) const
     {
+        regid = (regid & 0x0f) % 5;
         if (reg != CPU2::R_ANY) return reg;
 
-        return R_A + regid;
+        return R_SP + regid;
     };
     void map_cond (unsigned char data, char &zero, char &carry, const char *&name) const;
     /*
@@ -217,6 +225,7 @@ public:
         : CPU (_ram)
         , RAM (bus, 256, _ram)
         , MAR (bus, RAM)
+        , SP (bus)
         , TMP (bus)
         , A (bus)
         , B (bus)

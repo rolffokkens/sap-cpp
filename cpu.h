@@ -47,6 +47,9 @@ protected:
         void clock (void) {
             value++;
         };
+        void clock (int diff) {
+            value += diff;
+        };
     };
 
     InternalBus bus;

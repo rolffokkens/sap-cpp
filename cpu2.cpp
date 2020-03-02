@@ -4,16 +4,12 @@ const char *CPU2::Alu::OpNames[] = { "-", "ADD", "SUB" };
 
 const struct CPU2::MicroInstruction CPU2::prefix[] = {
         {.enable    = R_PC,    .load      = R_MAR                                  }
-,       {.enable    = R_RAM,   .load      = R_IR,   .clock_pc  = 1                 }
-};
-
-const struct CPU2::MicroInstruction CPU2::inst_nop[] = {
-        {                                                           .end_instr = 1 }
+,       {.enable    = R_RAM,   .load      = R_IR,   .clock_pc = 1                  }
 };
 
 const struct CPU2::MicroInstruction CPU2::inst_ld[] = {
         {.enable    = R_PC,    .load      = R_MAR                                  }
-,       {.enable    = R_RAM,   .load      = R_MAR,  .clock_pc  = 1                 }
+,       {.enable    = R_RAM,   .load      = R_MAR,  .clock_pc = 1                  }
 ,       {.enable    = R_RAM,   .load      = R_ANY,                  .end_instr = 1 }
 };
 
@@ -29,18 +25,18 @@ const struct CPU2::MicroInstruction CPU2::inst_sub[] = {
 
 const struct CPU2::MicroInstruction CPU2::inst_st[] = {
         {.enable    = R_PC,    .load      = R_MAR                                  }
-,       {.enable    = R_RAM,   .load      = R_MAR,  .clock_pc  = 1                 }
+,       {.enable    = R_RAM,   .load      = R_MAR,  .clock_pc = 1                  }
 ,       {.enable    = R_ANY,   .load      = R_RAM,                  .end_instr = 1 }
 };
 
-const struct CPU2::MicroInstruction CPU2::inst_ldi[] = {
+const struct CPU2::MicroInstruction CPU2::inst_set[] = {
         {.enable    = R_PC,    .load      = R_MAR                                  }
-,       {.enable    = R_RAM,   .load      = R_ANY,  .clock_pc  = 1, .end_instr = 1 }
+,       {.enable    = R_RAM,   .load      = R_ANY,  .clock_pc = 1, .end_instr = 1 }
 };
 
 const struct CPU2::MicroInstruction CPU2::inst_jmp[] = {
         {.enable    = R_PC,    .load      = R_MAR,                                 }
-,       {                                           .clock_pc  = 1                 }
+,       {                                           .clock_pc = 1                  }
 ,       {.enable    = R_RAM,   .load      = R_PC,   .cond = 1                      }
 ,       {                                                           .end_instr = 1 }
 };
@@ -51,6 +47,27 @@ const struct CPU2::MicroInstruction CPU2::inst_lda[] = {
 
 const struct CPU2::MicroInstruction CPU2::inst_sta[] = {
         {.enable    = R_A,     .load      = R_ANY,                  .end_instr = 1 }
+};
+
+const struct CPU2::MicroInstruction CPU2::inst_ldi[] = {
+        {.enable    = R_A,     .load      = R_MAR,                                 }
+,       {.enable    = R_RAM,   .load      = R_ANY,                  .end_instr = 1 }
+};
+
+const struct CPU2::MicroInstruction CPU2::inst_sti[] = {
+        {.enable    = R_A,     .load      = R_MAR,                                 }
+,       {.enable    = R_ANY,   .load      = R_RAM,                  .end_instr = 1 }
+};
+
+const struct CPU2::MicroInstruction CPU2::inst_psh[] = {
+        {                                           .clock_sp = -1                 }
+,       {.enable    = R_SP,    .load      = R_MAR,                                 }
+,       {.enable    = R_ANY,   .load      = R_RAM,                  .end_instr = 1 }
+};
+
+const struct CPU2::MicroInstruction CPU2::inst_pop[] = {
+        {.enable    = R_SP,    .load      = R_MAR,                                 }
+,       {.enable    = R_RAM,   .load      = R_ANY,  .clock_sp = 1,  .end_instr = 1 }
 };
 
 const struct CPU2::MicroInstruction CPU2::inst_out[] = {
@@ -70,6 +87,7 @@ const CPU2::RegisterInfo CPU2::register_info[] = {
 ,   {1, "TMP"}
 ,   {1, "ALU"}
 ,   {1, "OUT"}
+,   {0, "SP"}
 ,   {0, "A"}
 ,   {0, "B"}
 ,   {0, "C"}
@@ -77,20 +95,20 @@ const CPU2::RegisterInfo CPU2::register_info[] = {
 };
 
 const CPU2::InstructionInfo CPU2::instruction_info[] = {
-    { "NOP", 0, 0, 0 }
-,   { "LD",  1, 1, 0 }
+    { "LD",  1, 1, 0 }
 ,   { "ADD", 1, 0, 0 }
 ,   { "SUB", 0, 1, 0 }
 ,   { "ST",  1, 1, 0 }
-,   { "LDI", 1, 1, 0 }
+,   { "SET", 1, 1, 0 }
 ,   { "JMP", 1, 0, 1 }
 ,   { "LDA", 0, 1, 0 }
 ,   { "STA", 0, 1, 0 }
-,   { "R09", 0, 0, 0 }
-,   { "R0A", 0, 0, 0 }
-,   { "R0B", 0, 0, 0 }
-,   { "R0C", 0, 0, 0 }
+,   { "LDI", 0, 1, 0 }
+,   { "STI", 0, 1, 0 }
+,   { "PSH", 0, 1, 0 }
+,   { "POP", 0, 1, 0 }
 ,   { "R0D", 0, 0, 0 }
+,   { "R0E", 0, 0, 0 }
 ,   { "OUT", 0, 1, 0 }
 ,   { "HLT", 0, 0, 0 }
 };
@@ -98,6 +116,7 @@ const CPU2::InstructionInfo CPU2::instruction_info[] = {
 void CPU2::initRegisters (void)
 {
     registers[R_PC]  = &PC;
+    registers[R_SP]  = &SP;
     registers[R_IR]  = &IR;
     registers[R_MAR] = &MAR;
     registers[R_RAM] = &RAM;
@@ -112,20 +131,20 @@ void CPU2::initRegisters (void)
 
 void CPU2::initMicroInstructions (void)
 {
-    instructions[I_NOP] = initMicroInstruction (inst_nop);
     instructions[I_LD]  = initMicroInstruction (inst_lda);
     instructions[I_ADD] = initMicroInstruction (inst_add);
     instructions[I_SUB] = initMicroInstruction (inst_sub);
     instructions[I_ST]  = initMicroInstruction (inst_sta);
-    instructions[I_LDI] = initMicroInstruction (inst_ldi);
+    instructions[I_SET] = initMicroInstruction (inst_set);
     instructions[I_JMP] = initMicroInstruction (inst_jmp);
     instructions[I_LDA] = initMicroInstruction (inst_lda);
     instructions[I_STA] = initMicroInstruction (inst_sta);
-    instructions[I_R09] = initMicroInstruction (inst_hlt);
-    instructions[I_R0A] = initMicroInstruction (inst_hlt);
-    instructions[I_R0B] = initMicroInstruction (inst_hlt);
-    instructions[I_R0C] = initMicroInstruction (inst_hlt);
+    instructions[I_LDI] = initMicroInstruction (inst_ldi);
+    instructions[I_STI] = initMicroInstruction (inst_sti);
+    instructions[I_PSH] = initMicroInstruction (inst_psh);
+    instructions[I_POP] = initMicroInstruction (inst_pop);
     instructions[I_R0D] = initMicroInstruction (inst_hlt);
+    instructions[I_R0E] = initMicroInstruction (inst_hlt);
     instructions[I_OUT] = initMicroInstruction (inst_out);
     instructions[I_HLT] = initMicroInstruction (inst_hlt);
 };
@@ -178,8 +197,7 @@ void CPU2::debug (int addr) const
 
     cout << boost::format(" [%02X] %02X  %-3s") % addr % int(data) % info->name;
     if (info->regid) {
-        unsigned char regid = data & 0x03;
-        cout << sep << register_info[map_reg(R_ANY, regid)].name;
+        cout << sep << register_info[map_reg(R_ANY, data)].name;
         sep = ",";
     }
     if (info->cond) {
@@ -194,7 +212,7 @@ void CPU2::debug (int addr) const
         }
 
     }
-    if (info->argument) cout << sep << boost::format("0x%02X") % (RAM.get (addr + 1) & 0x0f);
+    if (info->argument) cout << sep << boost::format("0x%02X") % int (RAM.get (addr + 1));
     cout << endl;
 };
 
@@ -209,15 +227,18 @@ void CPU2::debug_microcode (const struct MicroInstruction *ip, unsigned char ir)
     cout <<  "BUS:" << boost::format("%02X") % int (bus.read ())
          <<  boost::format("  [%02X]") % int(micro_ptr);
     if (ip->enable) {
-        reg = map_reg (ip->enable, ir & 0x03);
+        reg = map_reg (ip->enable, ir);
         cout <<  boost::format(" enable:%-3s") % register_info[reg].name;
     }
     if (ip->load) {
-        reg = map_reg (ip->load,   ir & 0x03);
+        reg = map_reg (ip->load,   ir);
         cout <<  boost::format(" load:%-3s") % register_info[reg].name;
     }
     if (ip->clock_pc) {
-        cout <<  " clockPC";
+        cout <<  " clockPC" << (ip->clock_pc == 1 ? "+" : "-");
+    }
+    if (ip->clock_sp) {
+        cout <<  " clockSP" << (ip->clock_sp == 1 ? "+" : "-");
     }
     if (ip->oper) {
         cout <<  " operation:" << Alu::OpNames[ip->oper];
@@ -280,9 +301,10 @@ int CPU2::execute_microcode(const struct MicroInstruction *ip, unsigned char ir,
     if (zero  && Z != zero  -1) return 0;
 
     if (ip->oper)      ALU.SetOperation (ip->oper);
-    if (ip->enable)    registers[map_reg (ip->enable, ir & 0x03)]->enable ();
-    if (ip->load)      registers[map_reg (ip->load,   ir & 0x03)]->load ();
-    if (ip->clock_pc)  PC.clock ();
+    if (ip->enable)    registers[map_reg (ip->enable, ir)]->enable ();
+    if (ip->load)      registers[map_reg (ip->load,   ir)]->load ();
+    if (ip->clock_pc)  PC.clock (ip->clock_pc);
+    if (ip->clock_sp)  SP.clock (ip->clock_sp);
     if (ip->halt)      halted = 1;
 
     return ip->end_instr;
