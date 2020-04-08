@@ -119,12 +119,11 @@ private:
     ,   I_RET
     ,   I_MATH
 
-    ,   I_PSH
-    ,   I_POP
-    ,   I_R0D
-    ,   I_R0E
-    ,   I_OUT
-    ,   I_HLT
+    ,   I_CMP
+    ,   I_SWAP
+    ,   I_JUMPI
+    ,   I_JUMP
+    ,   I_HALT
     ,   I_NUM
     };
 
@@ -144,7 +143,7 @@ private:
     private:
         Register16 &TL, &TR;
         FlagsRegister &F;
-        char oper;
+        char oper, flags;
     public:
         enum Operation { OpNone, OpInd, OpAdd, OpSub };
         static const char *OpNames[];
@@ -158,9 +157,10 @@ private:
             oper = OpNone;
         };
 
-        void SetOperation (char _oper, char _ir)
+        void SetOperation (char _oper, char _ir, char _flags)
         {
-            oper = (_oper == OpInd ? _ir & 0x07 : _oper);
+            oper  = (_oper == OpInd ? _ir & 0x07 : _oper);
+            flags = _flags;
         };
         void enable (int partial);
     };
@@ -185,6 +185,7 @@ private:
         char clk_pc;
         char clk_sp;
         char oper;
+        char flags;
         char halt;
         char cond;
         char pen;
@@ -215,11 +216,11 @@ private:
     static const struct MicroInstruction inst_call[];
     static const struct MicroInstruction inst_ret[];
     static const struct MicroInstruction inst_math[];
-    static const struct MicroInstruction inst_sti[];
+    static const struct MicroInstruction inst_cmp[];
     static const struct MicroInstruction inst_psh[];
-    static const struct MicroInstruction inst_pop[];
-    static const struct MicroInstruction inst_out[];
-    static const struct MicroInstruction inst_hlt[];
+    static const struct MicroInstruction inst_jumpi[];
+    static const struct MicroInstruction inst_jump[];
+    static const struct MicroInstruction inst_halt[];
 
     struct MicroInstruction *instructions[16];
 
