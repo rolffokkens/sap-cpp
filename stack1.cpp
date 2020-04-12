@@ -15,6 +15,14 @@ using namespace std;
 
 int main (void)
 {
+    /******************************************************************************************
+    *                                                                                         *
+    *  BROKEN!!!! ISA changed                                                                 *
+    *                                                                                         *
+    ******************************************************************************************/
+
+
+
     unsigned char ram2[65536] = { 0x00, 0x00, 0x80 // [0000] SETFP 0x8000 # Initialize SP, FP
                                 , 0x10, 0xFC, 0xFF // [0003] SETSP -4     # Set SP (4 bytes on FP)
                                 , 0x20, 0x00, 0x00 // [0006] PUSHI 0
@@ -44,7 +52,9 @@ int main (void)
                                 , 0x10, 0x00, 0x00 // [000C] SETSP 0x0000 # Set SP
                                 };
 
-    CPU16 cpu (ram2);
+    Ram8 RAM8 (sizeof (ram2), ram2);
+
+    CPU16 cpu (&RAM8);
 
     while (!cpu.clock (2)) {};
 }

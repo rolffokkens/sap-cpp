@@ -1,3 +1,12 @@
+Registers:
+  - PC: Program Counter
+  - SP: Stack Pointer
+  - FP: Frame Pointer
+  - Tl: Internal temporagy register (left  ALU operand)
+  - Tr: Internal temporary register (right ALU operand)
+
+Instructions
+
 0x00 SETFP  X       FP = X;
                     SP = X;
 
@@ -30,22 +39,22 @@
                     PC = ram[SP++];
                     ram[--SP] = Tr;
 
-0xA0 {op}           Tr = ram[SP++];
-     op = ADD,      Tl = ram[SP++];
-          SUB,      ram[--SP] = Tl op Tr;   (Cond is set)
+0xA0 {op}           Tr = ram[SP++];          # op = ADD, SUB, ...
+                    Tl = ram[SP++];
+                    ram[--SP] = Tl op Tr;    # Cond is set
 
 0xB0 CMP            Tr = ram[SP++];
                     Tl = ram[SP++];
-                    Tl SUB Tr;           (Cond is set)
+                    Tl SUB Tr;               # Cond is set
 
 0xC0 SWAP           Tr = ram[SP++];
                     Tl = ram[SP++];
                     ram[--SP] = Tr;
                     ram[--SP] = Tl;
 
-0xD0 JUMPI cond,X   if (cond) PC = X     (Cond is optional)
+0xD0 JUMPI cond,X   if (cond) PC = X         # Cond is optional
 
 0xE0 JUMP  cond,X   Tr = ram[SP++];
-                    if (cond) PC = Tr;   (Cond is optional)
+                    if (cond) PC = Tr;       # Cond is optional
 
 0xF0 HALT

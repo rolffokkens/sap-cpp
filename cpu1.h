@@ -201,7 +201,7 @@ public:
      * Constructor. Setup all components.
      */
     CPU1 (unsigned char *_ram)
-        : CPU (_ram)
+        : CPU ()
         , RAM (bus, 16, _ram)
         , MAR (bus, RAM)
         , TMP (bus)

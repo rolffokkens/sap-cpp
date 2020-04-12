@@ -222,7 +222,7 @@ public:
      * Constructor. Setup all components.
      */
     CPU2 (unsigned char *_ram)
-        : CPU (_ram)
+        : CPU ()
         , RAM (bus, 256, _ram)
         , MAR (bus, RAM)
         , SP (bus)

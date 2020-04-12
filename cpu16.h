@@ -57,7 +57,7 @@ protected:
     /*
      * Constructor. Setup all components.
      */
-    CPU (unsigned char *_ram)
+    CPU (void)
         : bus ()
         , PC (bus)
         , IR (bus, 0x0f)
@@ -85,7 +85,7 @@ private:
     ,   R_PC
     ,   R_IR
     ,   R_MAR
-    ,   R_RAM
+    ,   R_MDR
     ,   R_TL
     ,   R_TR
     ,   R_ALU
@@ -114,14 +114,14 @@ private:
     ,   I_PUSHL
     ,   I_POPG
     ,   I_POPL
-    ,   I_CALLI
+    ,   I_RES0
     ,   I_CALL
     ,   I_RET
     ,   I_MATH
 
     ,   I_CMP
     ,   I_SWAP
-    ,   I_JUMPI
+    ,   I_RES1
     ,   I_JUMP
     ,   I_HALT
     ,   I_NUM
@@ -134,6 +134,41 @@ private:
     };
 
     static const InstructionInfo instruction_info[I_NUM];
+
+    /****************************************************************************
+     * Memory Address Register - passes address info to RAM
+     ****************************************************************************/
+    class MemAddrRegister : public Counter16 {
+    public:
+        MemAddrRegister (InternalBus16 &bus) : Counter16 (bus) { };
+
+        void load (int partial) {
+            Counter16::load (partial);
+        };
+
+        void clock (int diff) {
+            Counter16::clock (diff);
+        };
+    };
+
+    /****************************************************************************
+     * Memory Data Register - is connected to the Memory (data)
+     ****************************************************************************/
+    class MemDataRegister : public Register16 {
+    private:
+        Ram8            &RAM;
+        MemAddrRegister &MAR;
+    public:
+        MemDataRegister (InternalBus16 &bus, MemAddrRegister &_MAR, Ram8 &_RAM)
+            : Register16 (bus), MAR(_MAR), RAM (_RAM) { };
+
+        void enable (int partial);
+        void load   (int partial);
+
+        u_int16_t get (u_int16_t _addr) const {
+            return RAM.get(_addr);
+        };
+    };
 
     /****************************************************************************
      * ALU - Arithmetic & Logical Unit. Now only Add & Subtract
@@ -197,8 +232,9 @@ private:
     Register16 TL, TR;
     Counter16 SP;
     Register16 FP;
-    RamRegister8 RAM;
-    MemAddrRegister16 MAR;
+    Ram8 &RAM;
+    MemDataRegister MDR;
+    MemAddrRegister MAR;
     Alu16 ALU;
     FlagsRegister F;
 
@@ -212,13 +248,10 @@ private:
     static const struct MicroInstruction inst_pushl[];
     static const struct MicroInstruction inst_popg[];
     static const struct MicroInstruction inst_popl[];
-    static const struct MicroInstruction inst_calli[];
     static const struct MicroInstruction inst_call[];
     static const struct MicroInstruction inst_ret[];
     static const struct MicroInstruction inst_math[];
     static const struct MicroInstruction inst_cmp[];
-    static const struct MicroInstruction inst_psh[];
-    static const struct MicroInstruction inst_jumpi[];
     static const struct MicroInstruction inst_jump[];
     static const struct MicroInstruction inst_halt[];
 
@@ -268,10 +301,11 @@ public:
     /*
      * Constructor. Setup all components.
      */
-    CPU16 (unsigned char *_ram)
-        : CPU (_ram)
-        , RAM (bus, 65536, _ram)
-        , MAR (bus, RAM)
+    CPU16 (Ram8 &_RAM)
+        : CPU ()
+        , RAM (_RAM)
+        , MAR (bus)
+        , MDR (bus, MAR, RAM)
         , SP (bus)
         , FP (bus)
         , TL (bus)

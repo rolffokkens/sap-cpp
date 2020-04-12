@@ -63,7 +63,7 @@ protected:
     /*
      * Constructor. Setup all components.
      */
-    CPU (unsigned char *_ram)
+    CPU (void)
         : bus ()
         , PC (bus)
         , IR (bus, 0x0f)

@@ -5,148 +5,128 @@ const char *CPU16::Alu16::OpNames[] = { "-", "IND", "ADD", "SUB" };
 
 const struct CPU16::MicroInstruction CPU16::prefix[] = {
         {.enable = R_PC,  .load = R_MAR                                                 }
-,       {.enable = R_RAM, .load = R_IR,  .clk_pc = 1,                    .clk_mar = 1 }
+,       {.enable = R_MDR, .load = R_IR,  .clk_pc = 1,                    .clk_mar = 1 }
 };
 
 const struct CPU16::MicroInstruction CPU16::inst_setfp[] = {
-        {.enable = R_RAM, .load = R_FP,  .clk_pc = 1, .pld = REG_LOW,    .clk_mar = 1  }
-,       {.enable = R_RAM, .load = R_FP,  .clk_pc = 1, .pld = REG_HIGH                 }
+        {.enable = R_MDR, .load = R_FP,  .clk_pc = 1, .pld = REG_LOW,    .clk_mar = 1  }
+,       {.enable = R_MDR, .load = R_FP,  .clk_pc = 1, .pld = REG_HIGH                 }
 ,       {.enable = R_FP,  .load = R_SP,                                  .end_instr = 1 }
 };
 
 const struct CPU16::MicroInstruction CPU16::inst_setsp[] = {
-        {.enable = R_RAM, .load = R_TR,  .clk_pc = 1, .pld = REG_LOW,    .clk_mar = 1   }
-,       {.enable = R_RAM, .load = R_TR,  .clk_pc = 1, .pld = REG_HIGH                 }
+        {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_LOW,    .clk_mar = 1   }
+,       {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_HIGH                 }
 ,       {.enable = R_FP,  .load = R_TL,   .oper = Alu16::OpAdd                          }
 ,       {.enable = R_ALU, .load = R_SP,                                  .end_instr = 1 }
 };
 
 const struct CPU16::MicroInstruction CPU16::inst_pushi[] = {
-        {.enable = R_RAM, .load = R_TR,  .clk_pc = 1, .pld = REG_LOW,   .clk_mar = 1    }
-,       {.enable = R_RAM, .load = R_TR,  .clk_pc = 1, .clk_sp =-1, .pld = REG_HIGH                 }
+        {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_LOW,   .clk_mar = 1    }
+,       {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .clk_sp =-1, .pld = REG_HIGH                 }
 ,       {.enable = R_SP,  .load = R_MAR                                                 }
-,       {.enable = R_TR,  .load = R_RAM, .clk_sp =-1, .pen = REG_HIGH, .clk_mar =-1 }
-,       {.enable = R_TR,  .load = R_RAM,              .pen = REG_LOW,  .end_instr = 1 }
+,       {.enable = R_TR,  .load = R_MDR, .clk_sp =-1, .pen = REG_HIGH, .clk_mar =-1 }
+,       {.enable = R_TR,  .load = R_MDR,              .pen = REG_LOW,  .end_instr = 1 }
 };
 
 const struct CPU16::MicroInstruction CPU16::inst_pushg[] = {
-        {.enable = R_PC,  .load = R_MAR                                                 }
-,       {.enable = R_RAM, .load = R_TR,  .clk_pc = 1, .pld = REG_LOW                  }
-,       {.enable = R_PC,  .load = R_MAR                                                 }
-,       {.enable = R_RAM, .load = R_TR,  .clk_pc = 1, .pld = REG_HIGH                 }
+        {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_LOW,  .clk_mar = 1    }
+,       {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_HIGH     }
 ,       {.enable = R_TR,  .load = R_MAR, .clk_sp =-1                                    }
-,       {.enable = R_RAM, .load = R_TR,               .pld = REG_LOW,  .clk_mar = 1    }
-,       {.enable = R_RAM, .load = R_TR,               .pld = REG_HIGH,                 }
+,       {.enable = R_MDR, .load = R_TR,               .pld = REG_LOW,  .clk_mar = 1    }
+,       {.enable = R_MDR, .load = R_TR,               .pld = REG_HIGH,                 }
 ,       {.enable = R_SP,  .load = R_MAR                                                 }
-,       {.enable = R_TR,  .load = R_RAM, .clk_sp =-1, .pen = REG_HIGH, .clk_mar =-1 }
-,       {.enable = R_TR,  .load = R_RAM,              .pen = REG_LOW,  .end_instr = 1 }
+,       {.enable = R_TR,  .load = R_MDR, .clk_sp =-1, .pen = REG_HIGH, .clk_mar =-1 }
+,       {.enable = R_TR,  .load = R_MDR,              .pen = REG_LOW,  .end_instr = 1 }
 };
 
 const struct CPU16::MicroInstruction CPU16::inst_pushl[] = {
-        {.enable = R_PC,  .load = R_MAR                                                 }
-,       {.enable = R_RAM, .load = R_TR,  .clk_pc = 1, .pld = REG_LOW                  }
-,       {.enable = R_PC,  .load = R_MAR, .clk_sp =-1                                    }
-,       {.enable = R_RAM, .load = R_TR,  .clk_pc = 1, .pld = REG_HIGH                 }
+        {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_LOW,  .clk_mar = 1    }
+,       {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .clk_sp =-1, .pld = REG_HIGH     }
 ,       {.enable = R_FP,  .load = R_TL,  .oper = Alu16::OpAdd                           }
 ,       {.enable = R_ALU, .load = R_MAR                                                 }
-,       {.enable = R_RAM, .load = R_TR,               .pld = REG_LOW,  .clk_mar = 1    }
-,       {.enable = R_RAM, .load = R_TR,               .pld = REG_HIGH,                 }
+,       {.enable = R_MDR, .load = R_TR,               .pld = REG_LOW,  .clk_mar = 1    }
+,       {.enable = R_MDR, .load = R_TR,               .pld = REG_HIGH,                 }
 ,       {.enable = R_SP,  .load = R_MAR                                                 }
-,       {.enable = R_TR,  .load = R_RAM, .clk_sp =-1, .pen = REG_HIGH, .clk_mar =-1 }
-,       {.enable = R_TR,  .load = R_RAM,              .pen = REG_LOW,  .end_instr = 1 }
+,       {.enable = R_TR,  .load = R_MDR, .clk_sp =-1, .pen = REG_HIGH, .clk_mar =-1 }
+,       {.enable = R_TR,  .load = R_MDR,              .pen = REG_LOW,  .end_instr = 1 }
 };
 
 const struct CPU16::MicroInstruction CPU16::inst_popg[] = {
-        {.enable = R_RAM, .load = R_TR,  .clk_pc = 1, .pld = REG_LOW,  .clk_mar = 1     }
-,       {.enable = R_RAM, .load = R_TR,  .clk_pc = 1, .pld = REG_HIGH                 }
+        {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_LOW,  .clk_mar = 1     }
+,       {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_HIGH                 }
 ,       {.enable = R_SP,  .load = R_MAR                                                 }
-,       {.enable = R_RAM, .load = R_TL,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1    }
-,       {.enable = R_RAM, .load = R_TL,  .clk_sp = 1, .pld = REG_HIGH                  }
+,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1    }
+,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_HIGH                  }
 ,       {.enable = R_TR,  .load = R_MAR                                                 }
-,       {.enable = R_TL,  .load = R_RAM,              .pen = REG_LOW,  .clk_mar = 1    }
-,       {.enable = R_TL,  .load = R_RAM,              .pen = REG_HIGH, .end_instr = 1 }
+,       {.enable = R_TL,  .load = R_MDR,              .pen = REG_LOW,  .clk_mar = 1    }
+,       {.enable = R_TL,  .load = R_MDR,              .pen = REG_HIGH, .end_instr = 1 }
 };
 
 const struct CPU16::MicroInstruction CPU16::inst_popl[] = {
-        {.enable = R_RAM, .load = R_TR,  .clk_pc = 1, .pld = REG_LOW,  .clk_mar = 1     }
-,       {.enable = R_RAM, .load = R_TR,  .clk_pc = 1, .pld = REG_HIGH                 }
+        {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_LOW,  .clk_mar = 1     }
+,       {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_HIGH                 }
 ,       {.enable = R_FP,  .load = R_TL, .oper = Alu16::OpAdd                           }
 ,       {.enable = R_ALU, .load = R_TR                                                 }
 ,       {.enable = R_SP,  .load = R_MAR                                                 }
-,       {.enable = R_RAM, .load = R_TL,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1    }
-,       {.enable = R_RAM, .load = R_TL,  .clk_sp = 1, .pld = REG_HIGH                  }
+,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1    }
+,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_HIGH                  }
 ,       {.enable = R_TR,  .load = R_MAR                                                 }
-,       {.enable = R_TL,  .load = R_RAM,              .pen = REG_LOW,  .clk_mar = 1    }
-,       {.enable = R_TL,  .load = R_RAM,              .pen = REG_HIGH, .end_instr = 1 }
+,       {.enable = R_TL,  .load = R_MDR,              .pen = REG_LOW,  .clk_mar = 1    }
+,       {.enable = R_TL,  .load = R_MDR,              .pen = REG_HIGH, .end_instr = 1 }
 };
 
-const struct CPU16::MicroInstruction CPU16::inst_calli[] = {
-        {.enable = R_RAM, .load = R_TR,  .clk_pc = 1, .pld = REG_LOW,   .clk_mar = 1    }
-,       {.enable = R_RAM, .load = R_TR,  .clk_pc = 1, .clk_sp =-1, .pld = REG_HIGH                 }
-,       {.enable = R_SP,  .load = R_MAR                                                 }
-,       {.enable = R_PC,  .load = R_RAM, .clk_sp =-1, .pen = REG_HIGH, .clk_mar =-1     }
-,       {.enable = R_PC,  .load = R_RAM, .clk_sp =-1, .pen = REG_LOW,  .clk_mar =-1     }
-,       {.enable = R_FP,  .load = R_RAM, .clk_sp =-1, .pen = REG_HIGH, .clk_mar =-1     }
-,       {.enable = R_FP,  .load = R_RAM,              .pen = REG_LOW,                   }
+const struct CPU16::MicroInstruction CPU16::inst_call[] = {
+        {.enable = R_SP,  .load = R_MAR                                                 }
+,       {.enable = R_MDR, .load = R_TR,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1     }
+,       {.enable = R_MDR, .load = R_TR,               .pld = REG_HIGH                   }
+,       {.enable = R_PC,  .load = R_MDR, .clk_sp =-1, .pen = REG_HIGH, .clk_mar =-1     }
+,       {.enable = R_PC,  .load = R_MDR, .clk_sp =-1, .pen = REG_LOW,  .clk_mar =-1     }
+,       {.enable = R_FP,  .load = R_MDR, .clk_sp =-1, .pen = REG_HIGH, .clk_mar =-1     }
+,       {.enable = R_FP,  .load = R_MDR,              .pen = REG_LOW,                   }
 ,       {.enable = R_SP,  .load = R_FP,                                                 }
 ,       {.enable = R_TR,  .load = R_PC,                                .end_instr = 1   }
 };
 
-const struct CPU16::MicroInstruction CPU16::inst_call[] = {
-        {.enable    = R_TR,     .load      = R_ANY,                  .end_instr = 1 }
-};
-
 const struct CPU16::MicroInstruction CPU16::inst_ret[] = {
         {.enable = R_SP,  .load = R_MAR                                                 }
-,       {.enable = R_RAM, .load = R_TL,               .pld = REG_LOW,  .clk_mar = 1    }
-,       {.enable = R_RAM, .load = R_TL,               .pld = REG_HIGH                  }
+,       {.enable = R_MDR, .load = R_TL,               .pld = REG_LOW,  .clk_mar = 1    }
+,       {.enable = R_MDR, .load = R_TL,               .pld = REG_HIGH                  }
 ,       {.enable = R_FP,  .load = R_SP,                                                 }
 ,       {.enable = R_SP,  .load = R_MAR                                                 }
-,       {.enable = R_RAM, .load = R_FP,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1     }
-,       {.enable = R_RAM, .load = R_FP,  .clk_sp = 1, .pld = REG_HIGH, .clk_mar = 1     }
-,       {.enable = R_RAM, .load = R_PC,               .pld = REG_LOW,  .clk_mar = 1     }
-,       {.enable = R_RAM, .load = R_PC,               .pld = REG_HIGH,                  }
-,       {.enable = R_TL,  .load = R_RAM,              .pen = REG_HIGH, .clk_mar =-1     }
-,       {.enable = R_TL,  .load = R_RAM,              .pen = REG_LOW,  .end_instr = 1 }
+,       {.enable = R_MDR, .load = R_FP,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1     }
+,       {.enable = R_MDR, .load = R_FP,  .clk_sp = 1, .pld = REG_HIGH, .clk_mar = 1     }
+,       {.enable = R_MDR, .load = R_PC,               .pld = REG_LOW,  .clk_mar = 1     }
+,       {.enable = R_MDR, .load = R_PC,               .pld = REG_HIGH,                  }
+,       {.enable = R_TL,  .load = R_MDR,              .pen = REG_HIGH, .clk_mar =-1     }
+,       {.enable = R_TL,  .load = R_MDR,              .pen = REG_LOW,  .end_instr = 1 }
 };
 
 const struct CPU16::MicroInstruction CPU16::inst_math[] = {
         {.enable = R_SP,  .load = R_MAR, .oper = Alu16::OpInd, .flags = 1               }
-,       {.enable = R_RAM, .load = R_TR,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1     }
-,       {.enable = R_RAM, .load = R_TR,  .clk_sp = 1, .pld = REG_HIGH, .clk_mar = 1     }
-,       {.enable = R_RAM, .load = R_TL,               .pld = REG_LOW,  .clk_mar = 1     }
-,       {.enable = R_RAM, .load = R_TL,               .pld = REG_HIGH,                  }
-,       {.enable = R_ALU, .load = R_RAM,              .pen = REG_HIGH, .clk_mar =-1     }
-,       {.enable = R_ALU, .load = R_RAM,              .pen = REG_LOW,  .end_instr = 1 }
+,       {.enable = R_MDR, .load = R_TR,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1     }
+,       {.enable = R_MDR, .load = R_TR,  .clk_sp = 1, .pld = REG_HIGH, .clk_mar = 1     }
+,       {.enable = R_MDR, .load = R_TL,               .pld = REG_LOW,  .clk_mar = 1     }
+,       {.enable = R_MDR, .load = R_TL,               .pld = REG_HIGH,                  }
+,       {.enable = R_ALU, .load = R_MDR,              .pen = REG_HIGH, .clk_mar =-1     }
+,       {.enable = R_ALU, .load = R_MDR,              .pen = REG_LOW,  .end_instr = 1 }
 };
 
 const struct CPU16::MicroInstruction CPU16::inst_cmp[] = {
         {.enable = R_SP,  .load = R_MAR, .oper = Alu16::OpSub, .flags = 1               }
-,       {.enable = R_RAM, .load = R_TR,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1     }
-,       {.enable = R_RAM, .load = R_TR,  .clk_sp = 1, .pld = REG_HIGH, .clk_mar = 1     }
-,       {.enable = R_RAM, .load = R_TL,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1     }
-,       {.enable = R_RAM, .load = R_TL,  .clk_sp = 1, .pld = REG_HIGH,                  }
+,       {.enable = R_MDR, .load = R_TR,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1     }
+,       {.enable = R_MDR, .load = R_TR,  .clk_sp = 1, .pld = REG_HIGH, .clk_mar = 1     }
+,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1     }
+,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_HIGH,                  }
 ,       {.enable = R_ALU, .load = R_TL,                                .end_instr = 1   }
-};
-
-const struct CPU16::MicroInstruction CPU16::inst_psh[] = {
-        {                                           .clk_sp = -1                 }
-,       {.enable    = R_SP,    .load      = R_MAR,                                 }
-,       {.enable    = R_ANY,   .load      = R_RAM,                  .end_instr = 1 }
-};
-
-const struct CPU16::MicroInstruction CPU16::inst_jumpi[] = {
-        {.enable = R_RAM, .load = R_TL,  .clk_pc = 1, .pld = REG_LOW,   .clk_mar = 1    }
-,       {.enable = R_RAM, .load = R_TL,  .clk_pc = 1, .pld = REG_HIGH                   }
-,       {.enable = R_TL,  .load = R_PC,  .cond = 1                                      }
-,       {                                                               .end_instr = 1 }
 };
 
 const struct CPU16::MicroInstruction CPU16::inst_jump[] = {
         {.enable = R_SP,  .load = R_MAR                                                 }
-,       {.enable = R_RAM, .load = R_TL,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1    }
-,       {.enable = R_RAM, .load = R_TL,  .clk_sp = 1, .pld = REG_HIGH                  }
-,       {.enable = R_TR,  .load = R_PC,  .cond = 1                                      }
+,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1    }
+,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_HIGH                  }
+,       {.enable = R_TL,  .load = R_PC,  .cond = 1                                      }
+,       {                                                               .end_instr = 1 }
 };
 
 const struct CPU16::MicroInstruction CPU16::inst_halt[] = {
@@ -175,13 +155,13 @@ const CPU16::InstructionInfo CPU16::instruction_info[] = {
 ,   { "PUSHL",  1, 0 }
 ,   { "POPG",   1, 0 }
 ,   { "POPL",   1, 0 }
-,   { "CALLI",  1, 0 }
-,   { "CALL",   1, 0 }
+,   { "RES0",   1, 0 }
+,   { "CALL",   0, 0 }
 ,   { "RET",    0, 0 }
 ,   { "MATH",   0, 0 }
 ,   { "CMP",    0, 0 }
 ,   { "SWAP",   0, 0 }
-,   { "JUMPI",  1, 1 }
+,   { "RES1",   1, 1 }
 ,   { "JUMP",   0, 1 }
 ,   { "HALT",   0, 0 }
 };
@@ -193,7 +173,7 @@ void CPU16::initRegisters (void)
     registers[R_FP]  = &FP;
     registers[R_IR]  = &IR;
     registers[R_MAR] = &MAR;
-    registers[R_RAM] = &RAM;
+    registers[R_MDR] = &MDR;
     registers[R_TL]  = &TL;
     registers[R_TR]  = &TR;
     registers[R_ALU] = &ALU;
@@ -209,13 +189,13 @@ void CPU16::initMicroInstructions (void)
     instructions[I_PUSHL]  = initMicroInstruction (inst_pushl);
     instructions[I_POPG]   = initMicroInstruction (inst_popg);
     instructions[I_POPL]   = initMicroInstruction (inst_popl);
-    instructions[I_CALLI]  = initMicroInstruction (inst_calli);
+    instructions[I_RES0]   = initMicroInstruction (inst_halt);
     instructions[I_CALL]   = initMicroInstruction (inst_call);
     instructions[I_RET]    = initMicroInstruction (inst_ret);
     instructions[I_MATH]   = initMicroInstruction (inst_math);
     instructions[I_CMP]    = initMicroInstruction (inst_cmp);
     instructions[I_SWAP]   = initMicroInstruction (inst_halt);
-    instructions[I_JUMPI]  = initMicroInstruction (inst_jumpi);
+    instructions[I_RES1]   = initMicroInstruction (inst_halt);
     instructions[I_JUMP]   = initMicroInstruction (inst_jump);
 
     instructions[I_HALT]   = initMicroInstruction (inst_halt);
@@ -270,7 +250,7 @@ void CPU16::debug (u_int16_t addr) const
     const InstructionInfo *info;
     const char *sep = " ", *instr;
 
-    data    = RAM.get (addr);
+    data    = MDR.get (addr);
     i_instr = data >> 4;
     info    = instruction_info + (i_instr);
 
@@ -296,8 +276,8 @@ void CPU16::debug (u_int16_t addr) const
     }
     if (info->argument) {
         u_int16_t arg;
-        arg  = RAM.get (++addr);
-        arg |= RAM.get (++addr) << 8;
+        arg  = MDR.get (++addr);
+        arg |= MDR.get (++addr) << 8;
         cout << sep << boost::format("0x%04X") % int (arg);
     }
     cout << endl;
@@ -306,7 +286,7 @@ void CPU16::debug (u_int16_t addr) const
 
     cout << "   [SP]";
     for (i = 16; i; i--, addr++) {
-        cout << boost::format(" %s%02X") % (addr == fp ? "*" : " ") % int (RAM.get (addr));
+        cout << boost::format(" %s%02X") % (addr == fp ? "*" : " ") % int (MDR.get (addr));
     }
     cout << endl;
 };
@@ -436,6 +416,18 @@ int CPU16::clock (int debug_level)
     }
 
     return halted;
+};
+
+void CPU16::MemDataRegister::enable (int partial) {
+    value = RAM.get(MAR.get());
+
+    Register16::enable (partial);
+};
+
+void CPU16::MemDataRegister::load (int partial) {
+    Register16::load (partial);
+
+    RAM.set (MAR.get(), value);
 };
 
 void CPU16::Alu16::enable (int partial) {
