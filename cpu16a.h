@@ -109,11 +109,11 @@ private:
     enum InstructionID {
         I_SETFP  = 0
     ,   I_SETSP
-    ,   I_PUSHI
-    ,   I_PUSHG
+    ,   I_PUSHC
     ,   I_PUSHL
-    ,   I_POPG
-    ,   I_POPL
+    ,   I_FETCH
+    ,   I_STORE
+    ,   I_RES2
     ,   I_RES0
     ,   I_CALL
     ,   I_RET
@@ -227,11 +227,10 @@ private:
     static const struct MicroInstruction prefix[];
     static const struct MicroInstruction inst_setfp[];
     static const struct MicroInstruction inst_setsp[];
-    static const struct MicroInstruction inst_pushi[];
-    static const struct MicroInstruction inst_pushg[];
+    static const struct MicroInstruction inst_pushc[];
     static const struct MicroInstruction inst_pushl[];
-    static const struct MicroInstruction inst_popg[];
-    static const struct MicroInstruction inst_popl[];
+    static const struct MicroInstruction inst_fetch[];
+    static const struct MicroInstruction inst_store[];
     static const struct MicroInstruction inst_call[];
     static const struct MicroInstruction inst_ret[];
     static const struct MicroInstruction inst_math[];

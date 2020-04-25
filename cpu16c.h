@@ -92,6 +92,7 @@ private:
     ,   R_OUT
     ,   R_SP
     ,   R_FP
+    ,   R_ALU2
     ,   R_NUM
     ,   R_ANY
     };
@@ -109,16 +110,15 @@ private:
     enum InstructionID {
         I_SETFP  = 0
     ,   I_SETSP
-    ,   I_PUSHI
-    ,   I_PUSHG
-    ,   I_PUSHL
-    ,   I_POPG
-    ,   I_POPL
-    ,   I_RES0
+    ,   I_LDTRC
+    ,   I_LDTRL
+    ,   I_FETCH
+    ,   I_STORE
+    ,   I_PUSH
+    ,   I_POP
     ,   I_CALL
     ,   I_RET
     ,   I_MATH
-
     ,   I_CMP
     ,   I_SWAP
     ,   I_RES1
@@ -219,7 +219,7 @@ private:
     Ram8 &RAM;
     Counter16 MAR;
     MemDataRegister MDR;
-    Alu16 ALU;
+    Alu16 ALU, ALU2;
     FlagsRegister F;
 
     Register16 *registers[R_NUM];
@@ -227,15 +227,17 @@ private:
     static const struct MicroInstruction prefix[];
     static const struct MicroInstruction inst_setfp[];
     static const struct MicroInstruction inst_setsp[];
-    static const struct MicroInstruction inst_pushi[];
-    static const struct MicroInstruction inst_pushg[];
-    static const struct MicroInstruction inst_pushl[];
-    static const struct MicroInstruction inst_popg[];
-    static const struct MicroInstruction inst_popl[];
+    static const struct MicroInstruction inst_ldtrc[];
+    static const struct MicroInstruction inst_ldtrl[];
+    static const struct MicroInstruction inst_fetch[];
+    static const struct MicroInstruction inst_store[];
+    static const struct MicroInstruction inst_push[];
+    static const struct MicroInstruction inst_pop[];
     static const struct MicroInstruction inst_call[];
     static const struct MicroInstruction inst_ret[];
     static const struct MicroInstruction inst_math[];
     static const struct MicroInstruction inst_cmp[];
+    static const struct MicroInstruction inst_swap[];
     static const struct MicroInstruction inst_jump[];
     static const struct MicroInstruction inst_halt[];
 
@@ -294,10 +296,12 @@ public:
         , FP ("FP", bus)
         , TL ("TL", bus)
         , TR ("TR", bus)
-        , ALU ("ALU", bus, TL, TR, F)
+        , ALU  ("ALU", bus, TL, TR, F)
+        , ALU2 ("ALU2", bus, FP, TR, F)
     {
         initRegisters ();
         initMicroInstructions ();
+        ALU2.SetOperation (Alu16::OpAdd, 0, 0);
     };
 
     int clock (int debug_level);

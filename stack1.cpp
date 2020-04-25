@@ -54,7 +54,7 @@ int main (void)
 
     Ram8 RAM8 (sizeof (ram2), ram2);
 
-    CPU16 cpu (&RAM8);
+    CPU16 cpu (RAM8);
 
     while (!cpu.clock (2)) {};
 }

@@ -23,12 +23,15 @@ enum Partial {
  ****************************************************************************/
 class Register16 {
 private:
+    const char *name;
     InternalBus16 &bus;
     u_int16_t enable_mask, load_mask;
 protected:
     u_int16_t value;
 public:
-    Register16 (InternalBus16 &_bus, u_int16_t _enable_mask = 0xffff, u_int16_t _load_mask = 0xffff) : bus (_bus) {
+    Register16 (const char *_name, InternalBus16 &_bus, u_int16_t _enable_mask = 0xffff, u_int16_t _load_mask = 0xffff) 
+        : bus (_bus)
+        , name (_name) {
         enable_mask = _enable_mask;
         load_mask   = _load_mask;
     };
@@ -45,7 +48,7 @@ public:
  ****************************************************************************/
 class Counter16: public Register16 {
 public:
-    Counter16 (InternalBus16 &bus): Register16 (bus) { };
+    Counter16 (const char *_name, InternalBus16 &bus): Register16 (_name, bus) { };
     void clock (void) {
         value++;
     };
@@ -59,7 +62,7 @@ public:
  ****************************************************************************/
 class OutputRegister16: public Register16 {
 public:
-    OutputRegister16 (InternalBus16 &bus): Register16 (bus) { };
+    OutputRegister16 (const char *_name, InternalBus16 &bus): Register16 (_name, bus) { };
 
     void load (int partial) {
         Register16::load (partial);

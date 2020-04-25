@@ -1,136 +1,104 @@
 #include <string>
-#include "cpu16.h"
+#include "cpu16c.h"
 
 const char *CPU16::Alu16::OpNames[] = { "-", "IND", "ADD", "SUB" };
 
 const struct CPU16::MicroInstruction CPU16::prefix[] = {
         {.enable = R_PC,  .load = R_MAR                                                 }
-,       {.enable = R_MDR, .load = R_IR,  .clk_pc = 1,                    .clk_mar = 1 }
+,       {.enable = R_MDR, .load = R_IR,  .clk_pc = 1,                   .clk_mar = 1    }
 };
 
 const struct CPU16::MicroInstruction CPU16::inst_setfp[] = {
-        {.enable = R_MDR, .load = R_FP,  .clk_pc = 1, .pld = REG_LOW,    .clk_mar = 1  }
-,       {.enable = R_MDR, .load = R_FP,  .clk_pc = 1, .pld = REG_HIGH                 }
-,       {.enable = R_FP,  .load = R_SP,                                  .end_instr = 1 }
+        {.enable = R_MDR, .load = R_FP,  .clk_pc = 1, .pld = REG_LOW,   .clk_mar = 1    }
+,       {.enable = R_MDR, .load = R_FP,  .clk_pc = 1, .pld = REG_HIGH                   }
+,       {.enable = R_FP,  .load = R_SP,                                 .end_instr = 1  }
 };
 
 const struct CPU16::MicroInstruction CPU16::inst_setsp[] = {
-        {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_LOW,    .clk_mar = 1   }
-,       {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_HIGH                 }
-,       {.enable = R_FP,  .load = R_TL,   .oper = Alu16::OpAdd                          }
-,       {.enable = R_ALU, .load = R_SP,                                  .end_instr = 1 }
-};
-
-const struct CPU16::MicroInstruction CPU16::inst_pushi[] = {
         {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_LOW,   .clk_mar = 1    }
-,       {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .clk_sp =-1, .pld = REG_HIGH                 }
-,       {.enable = R_SP,  .load = R_MAR                                                 }
-,       {.enable = R_TR,  .load = R_MDR, .clk_sp =-1, .pen = REG_HIGH, .clk_mar =-1 }
-,       {.enable = R_TR,  .load = R_MDR,              .pen = REG_LOW,  .end_instr = 1 }
+,       {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_HIGH                   }
+,       {.enable = R_FP,  .load = R_TL,   .oper = Alu16::OpAdd                          }
+,       {.enable = R_ALU, .load = R_SP,                                 .end_instr = 1  }
 };
 
-const struct CPU16::MicroInstruction CPU16::inst_pushg[] = {
-        {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_LOW,  .clk_mar = 1    }
-,       {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_HIGH     }
-,       {.enable = R_TR,  .load = R_MAR, .clk_sp =-1                                    }
-,       {.enable = R_MDR, .load = R_TR,               .pld = REG_LOW,  .clk_mar = 1    }
-,       {.enable = R_MDR, .load = R_TR,               .pld = REG_HIGH,                 }
-,       {.enable = R_SP,  .load = R_MAR                                                 }
-,       {.enable = R_TR,  .load = R_MDR, .clk_sp =-1, .pen = REG_HIGH, .clk_mar =-1 }
-,       {.enable = R_TR,  .load = R_MDR,              .pen = REG_LOW,  .end_instr = 1 }
+const struct CPU16::MicroInstruction CPU16::inst_ldtrc[] = {
+        {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_LOW,   .clk_mar = 1    }
+,       {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_HIGH,  .end_instr = 1  }
 };
 
-const struct CPU16::MicroInstruction CPU16::inst_pushl[] = {
-        {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_LOW,  .clk_mar = 1    }
-,       {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .clk_sp =-1, .pld = REG_HIGH     }
-,       {.enable = R_FP,  .load = R_TL,  .oper = Alu16::OpAdd                           }
-,       {.enable = R_ALU, .load = R_MAR                                                 }
-,       {.enable = R_MDR, .load = R_TR,               .pld = REG_LOW,  .clk_mar = 1    }
-,       {.enable = R_MDR, .load = R_TR,               .pld = REG_HIGH,                 }
-,       {.enable = R_SP,  .load = R_MAR                                                 }
-,       {.enable = R_TR,  .load = R_MDR, .clk_sp =-1, .pen = REG_HIGH, .clk_mar =-1 }
-,       {.enable = R_TR,  .load = R_MDR,              .pen = REG_LOW,  .end_instr = 1 }
+const struct CPU16::MicroInstruction CPU16::inst_ldtrl[] = {
+        {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_LOW,   .clk_mar = 1    }
+,       {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_HIGH                   }
+,       {.enable = R_ALU2,.load = R_TR,                                 .end_instr = 1  }
 };
 
-const struct CPU16::MicroInstruction CPU16::inst_popg[] = {
-        {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_LOW,  .clk_mar = 1     }
-,       {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_HIGH                 }
-,       {.enable = R_SP,  .load = R_MAR                                                 }
-,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1    }
-,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_HIGH                  }
+const struct CPU16::MicroInstruction CPU16::inst_fetch[] = {
+        {.enable = R_TR,  .load = R_MAR                                                 }
+,       {.enable = R_MDR, .load = R_TR,               .pld = REG_LOW,   .clk_mar = 1    }
+,       {.enable = R_MDR, .load = R_TR,               .pld = REG_HIGH,  .end_instr = 1  }
+};
+
+const struct CPU16::MicroInstruction CPU16::inst_store[] = {
+        {.enable = R_SP,  .load = R_MAR                                                 }
+,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_LOW,   .clk_mar = 1    }
+,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_HIGH,  .clk_mar = 1    }
 ,       {.enable = R_TR,  .load = R_MAR                                                 }
-,       {.enable = R_TL,  .load = R_MDR,              .pen = REG_LOW,  .clk_mar = 1    }
-,       {.enable = R_TL,  .load = R_MDR,              .pen = REG_HIGH, .end_instr = 1 }
+,       {.enable = R_TL,  .load = R_MDR,              .pen = REG_LOW,   .clk_mar = 1    }
+,       {.enable = R_TL,  .load = R_MDR,              .pen = REG_HIGH,  .end_instr = 1  }
 };
 
-const struct CPU16::MicroInstruction CPU16::inst_popl[] = {
-        {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_LOW,  .clk_mar = 1     }
-,       {.enable = R_MDR, .load = R_TR,  .clk_pc = 1, .pld = REG_HIGH                 }
-,       {.enable = R_FP,  .load = R_TL, .oper = Alu16::OpAdd                           }
-,       {.enable = R_ALU, .load = R_TR                                                 }
-,       {.enable = R_SP,  .load = R_MAR                                                 }
-,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1    }
-,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_HIGH                  }
-,       {.enable = R_TR,  .load = R_MAR                                                 }
-,       {.enable = R_TL,  .load = R_MDR,              .pen = REG_LOW,  .clk_mar = 1    }
-,       {.enable = R_TL,  .load = R_MDR,              .pen = REG_HIGH, .end_instr = 1 }
+const struct CPU16::MicroInstruction CPU16::inst_push[] = {
+        {.enable = R_SP,  .load = R_MAR, .clk_sp =-1,                   .clk_mar =-1    }
+,       {.enable = R_TR,  .load = R_MDR, .clk_sp =-1, .pen = REG_HIGH,  .clk_mar =-1    }
+,       {.enable = R_TR,  .load = R_MDR,              .pen = REG_LOW,   .end_instr = 1  }
+};
+
+const struct CPU16::MicroInstruction CPU16::inst_pop[] = {
+        {.enable = R_SP,  .load = R_MAR                                                 }
+,       {.enable = R_MDR, .load = R_TR,  .clk_sp = 1, .pld = REG_LOW,   .clk_mar = 1    }
+,       {.enable = R_MDR, .load = R_TR,  .clk_sp = 1, .pld = REG_HIGH,  .end_instr = 1  }
 };
 
 const struct CPU16::MicroInstruction CPU16::inst_call[] = {
-        {.enable = R_SP,  .load = R_MAR                                                 }
-,       {.enable = R_MDR, .load = R_TR,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1     }
-,       {.enable = R_MDR, .load = R_TR,               .pld = REG_HIGH                   }
-,       {.enable = R_PC,  .load = R_MDR, .clk_sp =-1, .pen = REG_HIGH, .clk_mar =-1     }
-,       {.enable = R_PC,  .load = R_MDR, .clk_sp =-1, .pen = REG_LOW,  .clk_mar =-1     }
-,       {.enable = R_FP,  .load = R_MDR, .clk_sp =-1, .pen = REG_HIGH, .clk_mar =-1     }
+        {.enable = R_SP,  .load = R_MAR, .clk_sp =-1,                   .clk_mar =-1    }
+,       {.enable = R_PC,  .load = R_MDR, .clk_sp =-1, .pen = REG_HIGH,  .clk_mar =-1    }
+,       {.enable = R_PC,  .load = R_MDR, .clk_sp =-1, .pen = REG_LOW,   .clk_mar =-1    }
+,       {.enable = R_FP,  .load = R_MDR, .clk_sp =-1, .pen = REG_HIGH,  .clk_mar =-1    }
 ,       {.enable = R_FP,  .load = R_MDR,              .pen = REG_LOW,                   }
 ,       {.enable = R_SP,  .load = R_FP,                                                 }
-,       {.enable = R_TR,  .load = R_PC,                                .end_instr = 1   }
+,       {.enable = R_TR,  .load = R_PC,                                 .end_instr = 1  }
 };
 
 const struct CPU16::MicroInstruction CPU16::inst_ret[] = {
-        {.enable = R_SP,  .load = R_MAR                                                 }
-,       {.enable = R_MDR, .load = R_TL,               .pld = REG_LOW,  .clk_mar = 1    }
-,       {.enable = R_MDR, .load = R_TL,               .pld = REG_HIGH                  }
-,       {.enable = R_FP,  .load = R_SP,                                                 }
+        {.enable = R_FP,  .load = R_SP,                                                 }
 ,       {.enable = R_SP,  .load = R_MAR                                                 }
-,       {.enable = R_MDR, .load = R_FP,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1     }
-,       {.enable = R_MDR, .load = R_FP,  .clk_sp = 1, .pld = REG_HIGH, .clk_mar = 1     }
-,       {.enable = R_MDR, .load = R_PC,               .pld = REG_LOW,  .clk_mar = 1     }
-,       {.enable = R_MDR, .load = R_PC,               .pld = REG_HIGH,                  }
-,       {.enable = R_TL,  .load = R_MDR,              .pen = REG_HIGH, .clk_mar =-1     }
-,       {.enable = R_TL,  .load = R_MDR,              .pen = REG_LOW,  .end_instr = 1 }
+,       {.enable = R_MDR, .load = R_FP,  .clk_sp = 1, .pld = REG_LOW,   .clk_mar = 1    }
+,       {.enable = R_MDR, .load = R_FP,  .clk_sp = 1, .pld = REG_HIGH,  .clk_mar = 1    }
+,       {.enable = R_MDR, .load = R_PC,  .clk_sp = 1, .pld = REG_LOW,   .clk_mar = 1    }
+,       {.enable = R_MDR, .load = R_PC,  .clk_sp = 1, .pld = REG_HIGH,  .end_instr = 1  }
 };
 
 const struct CPU16::MicroInstruction CPU16::inst_math[] = {
         {.enable = R_SP,  .load = R_MAR, .oper = Alu16::OpInd, .flags = 1               }
-,       {.enable = R_MDR, .load = R_TR,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1     }
-,       {.enable = R_MDR, .load = R_TR,  .clk_sp = 1, .pld = REG_HIGH, .clk_mar = 1     }
-,       {.enable = R_MDR, .load = R_TL,               .pld = REG_LOW,  .clk_mar = 1     }
-,       {.enable = R_MDR, .load = R_TL,               .pld = REG_HIGH,                  }
-,       {.enable = R_ALU, .load = R_MDR,              .pen = REG_HIGH, .clk_mar =-1     }
-,       {.enable = R_ALU, .load = R_MDR,              .pen = REG_LOW,  .end_instr = 1 }
+,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_LOW,   .clk_mar = 1    }
+,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_HIGH,  .clk_mar = 1    }
+,       {.enable = R_ALU, .load = R_TR,               .pen = REG_LOW,   .end_instr = 1  }
 };
 
 const struct CPU16::MicroInstruction CPU16::inst_cmp[] = {
         {.enable = R_SP,  .load = R_MAR, .oper = Alu16::OpSub, .flags = 1               }
-,       {.enable = R_MDR, .load = R_TR,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1     }
-,       {.enable = R_MDR, .load = R_TR,  .clk_sp = 1, .pld = REG_HIGH, .clk_mar = 1     }
-,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1     }
-,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_HIGH,                  }
-,       {.enable = R_ALU, .load = R_TL,                                .end_instr = 1   }
+,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_LOW,   .clk_mar = 1    }
+,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_HIGH,  .clk_mar = 1    }
+,       {.enable = R_ALU, .load = R_TL,                                 .end_instr = 1  }
 };
 
 const struct CPU16::MicroInstruction CPU16::inst_jump[] = {
-        {.enable = R_SP,  .load = R_MAR                                                 }
-,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_LOW,  .clk_mar = 1    }
-,       {.enable = R_MDR, .load = R_TL,  .clk_sp = 1, .pld = REG_HIGH                  }
-,       {.enable = R_TL,  .load = R_PC,  .cond = 1                                      }
-,       {                                                               .end_instr = 1 }
+        {.enable = R_TR,  .load = R_PC,  .cond = 1                                      }
+,       {                                                               .end_instr = 1  }
 };
 
 const struct CPU16::MicroInstruction CPU16::inst_halt[] = {
-        {.halt      = 1,                                            .end_instr = 1 }
+        {.halt      = 1,                                                .end_instr = 1  }
 };
 
 const CPU16::RegisterInfo CPU16::register_info[] = {
@@ -138,24 +106,25 @@ const CPU16::RegisterInfo CPU16::register_info[] = {
 ,   {0, "PC"}
 ,   {1, "IR"}
 ,   {1, "MAR"}
-,   {1, "RAM"}
+,   {1, "MDR"}
 ,   {1, "TL"}
-,   {1, "TR"}
+,   {0, "TR"}
 ,   {1, "ALU"}
 ,   {1, "OUT"}
 ,   {0, "SP"}
 ,   {0, "FP"}
+,   {1, "ALU2"}
 };
 
 const CPU16::InstructionInfo CPU16::instruction_info[] = {
     { "SETFP",  1, 0 }
 ,   { "SETSP",  1, 0 }
-,   { "PUSHI",  1, 0 }
-,   { "PUSHG",  1, 0 }
-,   { "PUSHL",  1, 0 }
-,   { "POPG",   1, 0 }
-,   { "POPL",   1, 0 }
-,   { "RES0",   1, 0 }
+,   { "LDTRC",  1, 0 }
+,   { "LDTRL",  1, 0 }
+,   { "FETCH",  0, 0 }
+,   { "STORE",  0, 0 }
+,   { "PUSH",   0, 0 }
+,   { "POP",    0, 0 }
 ,   { "CALL",   0, 0 }
 ,   { "RET",    0, 0 }
 ,   { "MATH",   0, 0 }
@@ -168,28 +137,29 @@ const CPU16::InstructionInfo CPU16::instruction_info[] = {
 
 void CPU16::initRegisters (void)
 {
-    registers[R_PC]  = &PC;
-    registers[R_SP]  = &SP;
-    registers[R_FP]  = &FP;
-    registers[R_IR]  = &IR;
-    registers[R_MAR] = &MAR;
-    registers[R_MDR] = &MDR;
-    registers[R_TL]  = &TL;
-    registers[R_TR]  = &TR;
-    registers[R_ALU] = &ALU;
-    registers[R_OUT] = &OUT;
+    registers[R_PC]   = &PC;
+    registers[R_IR]   = &IR;
+    registers[R_MAR]  = &MAR;
+    registers[R_MDR]  = &MDR;
+    registers[R_TL]   = &TL;
+    registers[R_TR]   = &TR;
+    registers[R_ALU]  = &ALU;
+    registers[R_OUT]  = &OUT;
+    registers[R_SP]   = &SP;
+    registers[R_FP]   = &FP;
+    registers[R_ALU2] = &ALU2;
 };
 
 void CPU16::initMicroInstructions (void)
 {
     instructions[I_SETFP]  = initMicroInstruction (inst_setfp);
     instructions[I_SETSP]  = initMicroInstruction (inst_setsp);
-    instructions[I_PUSHI]  = initMicroInstruction (inst_pushi);
-    instructions[I_PUSHG]  = initMicroInstruction (inst_pushg);
-    instructions[I_PUSHL]  = initMicroInstruction (inst_pushl);
-    instructions[I_POPG]   = initMicroInstruction (inst_popg);
-    instructions[I_POPL]   = initMicroInstruction (inst_popl);
-    instructions[I_RES0]   = initMicroInstruction (inst_halt);
+    instructions[I_LDTRC]  = initMicroInstruction (inst_ldtrc);
+    instructions[I_LDTRL]  = initMicroInstruction (inst_ldtrl);
+    instructions[I_FETCH]  = initMicroInstruction (inst_fetch);
+    instructions[I_STORE]  = initMicroInstruction (inst_store);
+    instructions[I_PUSH]   = initMicroInstruction (inst_push);
+    instructions[I_POP]    = initMicroInstruction (inst_pop);
     instructions[I_CALL]   = initMicroInstruction (inst_call);
     instructions[I_RET]    = initMicroInstruction (inst_ret);
     instructions[I_MATH]   = initMicroInstruction (inst_math);

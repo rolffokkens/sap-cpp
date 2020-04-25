@@ -15,6 +15,8 @@ using namespace std;
 
 int main (void)
 {
+    int i;
+
     static u_int8_t ram2[65536] = { 0x20, 0x3A, 0x00 // [0000] PUSHI 0x003A # main
                                 , 0xE0             // [0003] JUMP
                                                    //                     #         # int fib (int p) {
@@ -46,14 +48,21 @@ int main (void)
 
                                 , 0x00, 0x00, 0x80 // [003A] SETFP 0x8000 #
                                                    //                     #         # main () {
-                                , 0x20, 0x06, 0x00 // [003C] PUSHI 6      #         #    fib (6)
-                                , 0x20, 0x04, 0x00 // [0040] PUSHI 0x0004 # fib()   #
+                                , 0x20, 0x06, 0x00 // [003C] LDTRC 6      #         #    fib (6)
+                                , 0x60             // [003F] PUSH         #         #
+                                , 0x20, 0x04, 0x00 // [0040] LDTRC 0x0004 # fib()   #
                                 , 0x80             // [0043] CALL
                                 , 0xF0             // [0044] HALT         #         # }
                                 };
-    Ram8 RAM8 (sizeof (ram2), ram2);
+    Cache8assoc RAM (sizeof (ram2), ram2, 128, 1);
 
-    CPU16 cpu (RAM8);
+    CPU16 cpu (RAM);
 
     while (!cpu.clock (1)) {};
+
+    for (i = 0; i < 2; i++) {
+         int nget, nset;
+         RAM.get_stats (i, nget, nset);
+         cout <<  boost::format("%s: %8d %8d") % i % nget %nset << endl;
+    }
 }

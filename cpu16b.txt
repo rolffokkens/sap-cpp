@@ -1,0 +1,48 @@
+Registers:
+  - PC: Program Counter
+  - SP: Stack Pointer
+  - FP: Frame Pointer
+  - TR: Top Register                (right ALU operand)
+  - Tl: Internal temporagy register (left  ALU operand)
+
+Instructions
+
+0x00 SETFP  X       FP = X;
+                    SP = X;
+
+0x10 SETSP  X       SP = FP + X;
+
+0x20 LDTRC  X       TR = X
+
+0x30 LDTRL  X       TR = FP + X
+
+0x40 FETCH          TR = ram[TR]
+
+0x50 STORE          ram[TR] = ram[SP++]
+
+0x60 PUSH           ram[--SP] = TR
+
+0x70 POP            TR = ram[SP++]
+
+0x80 CALL           ram[--SP] = PC;
+                    ram[--SP] = FP;
+                    FP = SP;
+                    PC = TR;
+
+0x90 RET            SP = FP;
+                    FP = ram[SP++];
+                    PC = ram[SP++];
+
+0xA0 {op}           TR = ram[SP++] op TR    # Cond is set; op = ADD, SUB, ...
+
+0xB0 CMP            ram[SP++] SUB TR;               # Cond is set
+
+0xC0 SWAP           Tl = ram[SP++];
+                    ram[--SP] = TR;
+                    TR = Tl;
+
+0xD0 
+
+0xE0 JUMP  cond,X   if (cond) PC = TR;       # Cond is optional
+
+0xF0 HALT

@@ -109,16 +109,15 @@ private:
     enum InstructionID {
         I_SETFP  = 0
     ,   I_SETSP
-    ,   I_PUSHI
-    ,   I_PUSHG
-    ,   I_PUSHL
-    ,   I_POPG
-    ,   I_POPL
-    ,   I_RES0
+    ,   I_LDTRC
+    ,   I_LDTRL
+    ,   I_FETCH
+    ,   I_STORE
+    ,   I_PUSH
+    ,   I_POP
     ,   I_CALL
     ,   I_RET
     ,   I_MATH
-
     ,   I_CMP
     ,   I_SWAP
     ,   I_RES1
@@ -227,15 +226,17 @@ private:
     static const struct MicroInstruction prefix[];
     static const struct MicroInstruction inst_setfp[];
     static const struct MicroInstruction inst_setsp[];
-    static const struct MicroInstruction inst_pushi[];
-    static const struct MicroInstruction inst_pushg[];
-    static const struct MicroInstruction inst_pushl[];
-    static const struct MicroInstruction inst_popg[];
-    static const struct MicroInstruction inst_popl[];
+    static const struct MicroInstruction inst_ldtrc[];
+    static const struct MicroInstruction inst_ldtrl[];
+    static const struct MicroInstruction inst_fetch[];
+    static const struct MicroInstruction inst_store[];
+    static const struct MicroInstruction inst_push[];
+    static const struct MicroInstruction inst_pop[];
     static const struct MicroInstruction inst_call[];
     static const struct MicroInstruction inst_ret[];
     static const struct MicroInstruction inst_math[];
     static const struct MicroInstruction inst_cmp[];
+    static const struct MicroInstruction inst_swap[];
     static const struct MicroInstruction inst_jump[];
     static const struct MicroInstruction inst_halt[];
 
