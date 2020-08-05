@@ -131,7 +131,7 @@ void CPU2::initRegisters (void)
 
 void CPU2::initMicroInstructions (void)
 {
-    instructions[I_LD]  = initMicroInstruction (inst_lda);
+    instructions[I_LD]  = initMicroInstruction (inst_ld);
     instructions[I_ADD] = initMicroInstruction (inst_add);
     instructions[I_SUB] = initMicroInstruction (inst_sub);
     instructions[I_ST]  = initMicroInstruction (inst_st);
