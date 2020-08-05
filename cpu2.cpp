@@ -134,7 +134,7 @@ void CPU2::initMicroInstructions (void)
     instructions[I_LD]  = initMicroInstruction (inst_lda);
     instructions[I_ADD] = initMicroInstruction (inst_add);
     instructions[I_SUB] = initMicroInstruction (inst_sub);
-    instructions[I_ST]  = initMicroInstruction (inst_sta);
+    instructions[I_ST]  = initMicroInstruction (inst_st);
     instructions[I_SET] = initMicroInstruction (inst_set);
     instructions[I_JMP] = initMicroInstruction (inst_jmp);
     instructions[I_LDA] = initMicroInstruction (inst_lda);
