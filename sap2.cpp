@@ -5,7 +5,11 @@
  * outputs each counter value
  */
 
+#include <stdio.h>
 #include <iostream>
+#include <sstream>
+#include <fstream>
+#include <cstring>
 #include <boost/format.hpp>
 #include <cstddef>
 
@@ -13,8 +17,10 @@
 
 using namespace std; 
 
-int main (void)
+int main (int argc, char *argv[])
 {
+    std::string code;
+
     unsigned char ram2[256] = { 0x42, 0x01 // [00] SET B,0x01  # Set B to dec value 1
                               , 0x41, 0x05 // [02] SET A,0x05  # Set A to counter value 5
                               , 0xe1       // [04] OUT A       # Output A
@@ -30,6 +36,17 @@ int main (void)
 
                               , 0xf0       // [09] HLT         # HALT
                               };
+
+    const unsigned char *codep;
+
+    if (argc == 2) {
+        FILE *fp;
+
+        fp = fopen (argv[1], "r");
+        fread (ram2, 1, 256, fp);
+        fclose (fp);
+    }
+
 
     CPU2 cpu (ram2);
 
