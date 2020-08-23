@@ -1,0 +1,21 @@
+int a;
+int b;
+
+int test (int i, int j)
+{
+    int r;
+    int s;
+
+    {
+        r = i + j;
+    };
+    s = i < j;
+
+    return r;
+};
+
+int main (int c)
+{
+    return test (1, 2);
+};
+

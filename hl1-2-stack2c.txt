@@ -1,0 +1,32 @@
+
+hl1-2-stack2c.py: A Half-Level-1 language to stack2c bin format compiler
+
+Half-Level-1 is a simple computer languages somewhat similar to C, Example code:
+
+    int a;
+    int b;
+
+    int loopy (int param)
+    {
+        int i;
+
+        i = 0;
+        while (param > 2) {
+            out param;
+            param = param - 1;
+            i = i + param;
+        };
+
+        return i;
+    };
+
+    int main (int param)
+    {
+        return loopy (param);
+    };
+
+Usage:
+
+    bash-5.0$ python3 hl1-2-stack2c.py < test4.hl1 > test4.bin 
+    bash-5.0$ 
+

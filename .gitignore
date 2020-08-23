@@ -6,3 +6,4 @@ stack2a
 stack2b
 stack2c
 *.o
+*.bin

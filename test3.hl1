@@ -1,0 +1,18 @@
+int a;
+int b;
+
+int main (int param)
+{
+    int d;
+    int e;
+
+    out param + 3;
+
+    if (param) {
+        return 5;
+    } else {
+        return 6;
+    };
+
+    return 1 + 2;
+};

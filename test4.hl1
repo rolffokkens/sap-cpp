@@ -1,0 +1,38 @@
+int a;
+int b;
+
+int loopy (int param)
+{
+    int i;
+
+    i = 0;
+    while (param > 2) {
+        out param;
+        param = param - 1;
+        i = i + param;
+    };
+
+    return i;
+};
+
+
+int main (int param)
+{
+    int d;
+    int e;
+
+    d = loopy (param);
+
+    if (param > 10) {
+        e = 5;
+    } else {
+        e = 6;
+    };
+
+    out 0;
+
+    out d;
+    out e;
+
+    return 1 + 2;
+};

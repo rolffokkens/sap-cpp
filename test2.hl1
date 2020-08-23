@@ -1,0 +1,16 @@
+int a;
+int b;
+
+int fib (int p)
+{
+    int i;
+    int j;
+
+    return p + i;
+};
+
+int main (int c)
+{
+    int d;
+    int e;
+};
