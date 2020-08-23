@@ -37,16 +37,11 @@ int main (int argc, char *argv[])
                               , 0xf0       // [09] HLT         # HALT
                               };
 
-    const unsigned char *codep;
-
     if (argc == 2) {
-        FILE *fp;
-
-        fp = fopen (argv[1], "r");
-        fread (ram2, 1, 256, fp);
-        fclose (fp);
+        ifstream myFile (argv[1], ios::in | ios::binary);
+        if (!myFile.read ((char *)ram2, sizeof (ram2))) {
+        }
     }
-
 
     CPU2 cpu (ram2);
 
