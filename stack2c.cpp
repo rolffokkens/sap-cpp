@@ -8,14 +8,15 @@
 #include <iostream>
 #include <boost/format.hpp>
 #include <cstddef>
+#include <fstream>
 
 #include "cpu16c.h"
 
 using namespace std; 
 
-int main (void)
+int main (int argc, char *argv[])
 {
-    int i, ticks = 0;
+    int i, debug = 0, param, ticks = 0;
 
     static u_int8_t ram2[65536] = { 0x20, 0x4A, 0x00 // [0000] PUSHI 0x004A # main
                                   , 0xE0             // [0003] JUMP
@@ -72,16 +73,31 @@ int main (void)
                                   , 0x80             // [004D] CALL
                                   , 0xF0             // [004E] HALT         #         # }
                                   };
-    Cache8assoc RAM (sizeof (ram2), ram2, 64, 2);
+
+    debug = (argc >= 2 ? atoi (argv[1]) : 0);
+
+    if (argc >= 3) {
+        ifstream myFile (argv[2], ios::in | ios::binary);
+        if (!myFile.read ((char *)ram2, sizeof (ram2))) {
+        }
+    }
+    param = (argc >= 4 ? atoi (argv[3]) : 0);
+
+    ram2[0xfffe] =  param       & 0xff;
+    ram2[0xffff] = (param >> 8) & 0xff;
+
+    Cache8assoc RAM (sizeof (ram2), ram2, 256, 2);
 
     CPU16 cpu (RAM);
 
-    while (!cpu.clock (2)) { ticks++;};
+    while (!cpu.clock (debug)) { ticks++;};
 
-    for (i = 0; i < 2; i++) {
-         int nget, nset;
-         RAM.get_stats (i, nget, nset);
-         cout <<  boost::format("%s: %8d %8d") % i % nget % nset << endl;
+    if (debug) {
+        for (i = 0; i < 2; i++) {
+            int nget, nset;
+            RAM.get_stats (i, nget, nset);
+            cout <<  boost::format("%s: %8d %8d") % i % nget % nset << endl;
+        }
+        cout <<  boost::format("TICKS: %d") % ticks << endl;
     }
-    cout <<  boost::format("TICKS: %d") % ticks << endl;
 }

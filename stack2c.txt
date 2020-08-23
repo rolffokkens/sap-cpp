@@ -1,0 +1,25 @@
+
+stack2c: cpu16c based VM
+
+Features:
+- 64 kB RAM
+- 256 B Cache (Yes, this is getting out of control)
+
+Arguments:
+  #1: Debug level: 0 = None
+                   1 = Machine code trace
+                   2 = Microcode trace
+  #2: bin file to run
+  #3: argumnent passed to program
+
+Example:
+
+    bash-5.0$ ./stack2c 0 test4.bin 4
+    OUTPUT:4
+    OUTPUT:3
+    OUTPUT:0
+    OUTPUT:5
+    OUTPUT:6
+    bash-5.0$ 
+
+The hl1-2-stack2c.py program can compile code to the stack2c bin format
