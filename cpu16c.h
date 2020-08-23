@@ -121,7 +121,7 @@ private:
     ,   I_MATH
     ,   I_CMP
     ,   I_SWAP
-    ,   I_RES1
+    ,   I_OUT
     ,   I_JUMP
     ,   I_HALT
     ,   I_NUM
@@ -238,6 +238,7 @@ private:
     static const struct MicroInstruction inst_math[];
     static const struct MicroInstruction inst_cmp[];
     static const struct MicroInstruction inst_swap[];
+    static const struct MicroInstruction inst_out[];
     static const struct MicroInstruction inst_jump[];
     static const struct MicroInstruction inst_halt[];
 

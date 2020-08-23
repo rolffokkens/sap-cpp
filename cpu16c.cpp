@@ -92,6 +92,11 @@ const struct CPU16::MicroInstruction CPU16::inst_cmp[] = {
 ,       {.enable = R_ALU, .load = R_TL,                                 .end_instr = 1  }
 };
 
+const struct CPU16::MicroInstruction CPU16::inst_out[] = {
+        {.enable = R_TR,  .load = R_OUT                                                 }
+,       {                                                               .end_instr = 1  }
+};
+
 const struct CPU16::MicroInstruction CPU16::inst_jump[] = {
         {.enable = R_TR,  .load = R_PC,  .cond = 1                                      }
 ,       {                                                               .end_instr = 1  }
@@ -130,7 +135,7 @@ const CPU16::InstructionInfo CPU16::instruction_info[] = {
 ,   { "MATH",   0, 0 }
 ,   { "CMP",    0, 0 }
 ,   { "SWAP",   0, 0 }
-,   { "RES1",   1, 1 }
+,   { "OUT",    0, 0 }
 ,   { "JUMP",   0, 1 }
 ,   { "HALT",   0, 0 }
 };
@@ -165,7 +170,7 @@ void CPU16::initMicroInstructions (void)
     instructions[I_MATH]   = initMicroInstruction (inst_math);
     instructions[I_CMP]    = initMicroInstruction (inst_cmp);
     instructions[I_SWAP]   = initMicroInstruction (inst_halt);
-    instructions[I_RES1]   = initMicroInstruction (inst_halt);
+    instructions[I_OUT]    = initMicroInstruction (inst_out);
     instructions[I_JUMP]   = initMicroInstruction (inst_jump);
 
     instructions[I_HALT]   = initMicroInstruction (inst_halt);
