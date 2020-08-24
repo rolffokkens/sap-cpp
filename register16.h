@@ -35,8 +35,8 @@ public:
         enable_mask = _enable_mask;
         load_mask   = _load_mask;
     };
-    void reset (void) {
-        value = 0;
+    void reset (u_int16_t _value = 0) {
+        value = _value;
     };
     virtual u_int16_t get (void) const;
     virtual void enable (int partial);

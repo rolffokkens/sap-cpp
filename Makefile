@@ -1,4 +1,4 @@
-all: sap1 sap2 stack1 stack2 stack2a stack2b stack2c
+all: sap1 sap2 stack1 stack2 stack2a stack2b stack2c stack2d
 
 sap1: sap1.o cpu1.o
 	g++ -g sap1.o cpu1.o -o sap1
@@ -30,6 +30,9 @@ cpu16b.o: cpu16b.cpp cpu16b.h ram8.h register16.h internalbus16.h
 cpu16c.o: cpu16c.cpp cpu16c.h ram8.h register16.h internalbus16.h
 	g++ -g cpu16c.cpp -c -o cpu16c.o
 
+cpu16d.o: cpu16d.cpp cpu16d.h ram8.h register16.h internalbus16.h
+	g++ -g cpu16d.cpp -c -o cpu16d.o
+
 register16.o: register16.cpp register16.h internalbus16.h
 	g++ -g register16.cpp -c -o register16.o
 
@@ -50,3 +53,6 @@ stack2b: stack2b.o cpu16b.o register16.o ram8.o
 
 stack2c: stack2c.o cpu16c.o register16.o ram8.o
 	g++ -g stack2c.o cpu16c.o register16.o ram8.o -o stack2c
+
+stack2d: main16d.o cpu16d.o register16.o ram8.o
+	g++ -g main16d.o cpu16d.o register16.o ram8.o -o stack2d

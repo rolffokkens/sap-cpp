@@ -1,0 +1,71 @@
+Registers:
+  - PC: Program Counter
+  - SP: Stack Pointer
+  - FP: Frame Pointer
+  - TR: Top Register                (right ALU operand)
+  - Tl: Internal temporagy register (left  ALU operand)
+
+Instructions
+
+0x00 SETFP  X       FP = X;
+                    SP = X;
+
+0x10 SETSP  X       SP = FP + X;
+
+0x20 LDTRC  X       TR = X
+
+0x30 LDTRL  X       TR = FP + X
+
+0x40 FETCH          TR = ram[TR]
+
+0x50 STORE          ram[TR] = ram[SP++]
+
+0x60 PUSH           ram[--SP] = TR
+
+0x70 POP            TR = ram[SP++]
+
+0x80 CALL           ram[--SP] = PC;
+                    ram[--SP] = FP;
+                    FP = SP;
+                    PC = TR;
+
+0x90 RET            SP = FP;
+                    FP = ram[SP++];
+                    PC = ram[SP++];
+
+0xA0 {op}           TR = ram[SP++] op TR    # Cond is set; op = ADD, SUB, ...
+    0xA2 = ADD
+    0xA3 = SUB
+
+0xB0 CMP   cond     ram[SP++] SUB TR;               # Cond is set
+    0xB4 = CMP Z    TR = 0
+    0xB5 = CMP NZ   if (cond) TR = 1
+    0xB6 = CMP C
+    0xB7 = CMP NC
+    0xB9 = CMP LT
+    0xBA = CMP LE
+    0xBB = CMP EQ
+    0xBC = CMP GE
+    0xBD = CMP GT
+    0xBE = CMP NE
+
+0xC0 SWAP           Tl = ram[SP++];
+                    ram[--SP] = TR;
+                    TR = Tl;
+
+0xD0 OUT            Print TR
+
+0xE0 JUMP  cond     if (cond) PC = TR;       # Cond is optional
+    0xE0 = JUMP
+    0xE4 = JUMP Z
+    0xE5 = JUMP NZ
+    0xE6 = JUMP C
+    0xE7 = JUMP NZ
+    0xE9 = JUMP LT
+    0xEA = JUMP LE
+    0xEB = JUMP EQ
+    0xEC = JUMP GE
+    0xED = JUMP GT
+    0xEE = JUMP NE
+
+0xF0 HALT
