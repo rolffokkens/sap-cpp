@@ -55,4 +55,4 @@ stack2c: stack2c.o cpu16c.o register16.o ram8.o
 	g++ -g stack2c.o cpu16c.o register16.o ram8.o -o stack2c
 
 stack2d: main16d.o cpu16d.o register16.o ram8.o
-	g++ -g main16d.o cpu16d.o register16.o ram8.o -o stack2d
+	g++ -g main16d.o cpu16d.o register16.o ram8.o -lboost_program_options -o stack2d

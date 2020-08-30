@@ -6,89 +6,143 @@
  */
 
 #include <iostream>
-#include <boost/format.hpp>
 #include <cstddef>
 #include <fstream>
+#include <boost/format.hpp>
+#include <boost/program_options.hpp>
 
 #include "cpu16d.h"
 
 using namespace std; 
 
+namespace po = boost::program_options;
+
+static po::variables_map vm;
+
+int parse_args (int argc, char *argv[])
+{
+    po::options_description desc("Allowed options");
+    desc.add_options()
+        ("help", "set debug level")
+        ("debug", po::value<int>(),    "set debug level")
+        ("image", po::value<string>(), "load specified image")
+        ("arg",   po::value<int>(),    "set argument")
+    ;
+
+    po::store(po::parse_command_line(argc, argv, desc), vm);
+    po::notify(vm);    
+
+    if (vm.count("help")) {
+        cout << desc << "\n";
+        return 1;
+    }
+    return 0;
+}
+
 int main (int argc, char *argv[])
 {
     int i, debug = 0, param, ticks = 0;
 
-    static u_int8_t ram2[65536] = { 0x20, 0x01, 0x00 // [0000] LDTRC 0x0001
-                                  , 0x60             // [0003] PUSH
-                                  , 0x20, 0x02, 0x00 // [0004] LDTRC 0x0002
-                                  , 0xBC             // [0007] CMP   LT
-                                  , 0xF0             // [0008] HALT
-
-                                  , 0x20, 0x4A, 0x00 // [0000] LDTRC 0x004A # main
+    static u_int8_t ram2[65536] = { 0x20, 0x67, 0x00 // [0000] LDTORC 0x0067 # _init
                                   , 0xE0             // [0003] JUMP
 
-                                                     //                     #         # int fib (int p) {
-                                  , 0x10, 0xFC, 0xFF // [0004] SETSP -4     #         #     int i, j;
+                                                     //                      #         # int fib (int p) {
+                                  , 0x10, 0xFC, 0xFF // [0004] SETSP  FP,-4  #         #     int i, j;
 
-                                  , 0x30, 0x04, 0x00 // [0007] LDTRL 4      # push p  #     if (p < 2) {
+                                  , 0x30, 0x04, 0x00 // [0007] LDTORL 4      # push p  #     if (p < 2) {
                                   , 0x40             // [000A] FETCH
                                   , 0x60             // [000B] PUSH
 
-                                  , 0x20, 0x02, 0x00 // [000C] LDTRC 2      # push #2 #
-                                  , 0xB0             // [000F] CMP
-                                  , 0x20, 0x19, 0x00 // [0010] LDTRC 0x0019
-                                  , 0xE7             // [0013] JUMP  NC
-                                  , 0x30, 0x04, 0x00 // [0014] LDTRL 4      # push p  #         return p;
-                                  , 0x40             // [0017] FETCH
-                                  , 0x90             // [0018] RET          #         #     }
-                                  , 0x30, 0x04, 0x00 // [0019] LDTRL 4      # push p  #     i = fib (p - 1);
+                                  , 0x20, 0x02, 0x00 // [000C] LDTORC 2      # push #2 #
+                                  , 0xB9             // [000F] CMP LT
+                                  , 0x60             // [0010] PUSH
+
+                                  , 0x20, 0x00, 0x00 // [0011] LDTORC 0      # push #0 #
+                                  , 0xB0             // [0014] CMP
+                                  , 0x20, 0x1E, 0x00 // [0015] LDTORC 0x001E #..else..
+                                  , 0xE4             // [0018] JUMP Z
+
+                                  , 0x30, 0x04, 0x00 // [0019] LDTORL 4      # push p  #         return p;
                                   , 0x40             // [001C] FETCH
-                                  , 0x60             // [001D] PUSH
-                                  , 0x20, 0x01, 0x00 // [001E] LDTRC 1      # push #1 #
-                                  , 0xA3             // [0021] SUB          # p1 - #1 #
+                                  , 0x90             // [001D] RET           #         #     }
+
+                                  , 0x30, 0x04, 0x00 // [001E] LDTORL 4      # push p  #
+                                  , 0x40             // [0021] FETCH
                                   , 0x60             // [0022] PUSH
-                                  , 0x20, 0x04, 0x00 // [0023] LDTRC 0x0004 # fib()   #
-                                  , 0x80             // [0026] CALL
+
+                                  , 0x20, 0x01, 0x00 // [0023] LDTORC 1      # push #1 #
+                                  , 0xA3             // [0026] SUB           # p1 - #1 #
                                   , 0x60             // [0027] PUSH
-                                  , 0x30, 0xFE, 0xFF // [0028] LDTRL -2     # i =     #
-                                  , 0x50             // [002B] STORE
-                                  , 0x30, 0x04, 0x00 // [002C] LDTRL 4      # push p  #     j = fib (p - 2);
-                                  , 0x40             // [002F] FETCH
-                                  , 0x60             // [0030] PUSH
-                                  , 0x20, 0x02, 0x00 // [0031] LDTRC 2      # push #2 #
-                                  , 0xA3             // [0034] SUB          # p1 - #1 #
-                                  , 0x60             // [0035] PUSH
-                                  , 0x20, 0x04, 0x00 // [0036] LDTRC 0x0004 # fib()   #
-                                  , 0x80             // [0039] CALL
-                                  , 0x60             // [003A] PUSH
-                                  , 0x30, 0xFC, 0xFF // [003B] LDTRL -4     # j =     #
-                                  , 0x50             // [003E] STORE
 
-                                  , 0x30, 0xFE, 0xFF // [003F] LDTRL -2     # push i  #     return i + j
-                                  , 0x40             // [0042] FETCH
-                                  , 0x60             // [0043] PUSH
-                                  , 0x30, 0xFC, 0xFF // [0044] LDTRL -4     # push j  #
-                                  , 0x40             // [0047] FETCH
-                                  , 0xA2             // [0048] ADD          #         #
-                                  , 0x90             // [0049] RET          #         #
+                                  , 0x20, 0x04, 0x00 // [0028] LDTORC 4      # fib     #     i = fib (p - 1);
+                                  , 0x80             // [002B] CALL
+                                  , 0x11, 0x02, 0x00 // [002C] SETSP  SP,2   #
 
-                                  , 0x00, 0x00, 0x80 // [004A] SETFP 0x8000 #
-                                                     //                     #         # main () {
-                                  , 0x20, 0x06, 0x00 // [0046] LDTRC 6      #         #    fib (6)
-                                  , 0x60             // [0049] PUSH
-                                  , 0x20, 0x04, 0x00 // [004A] LDTRC 0x0004 # fib()   #
-                                  , 0x80             // [004D] CALL
-                                  , 0xF0             // [004E] HALT         #         # }
+                                  , 0x60             // [002F] PUSH
+                                  , 0x30, 0xFE, 0xFF // [0030] LDTORL -2     # push i  #
+                                  , 0x50             // [0033] STORE
+
+                                  , 0x30, 0x04, 0x00 // [0034] LDTORL 4      # push p  #         
+                                  , 0x40             // [0037] FETCH
+                                  , 0x60             // [0038] PUSH
+
+                                  , 0x20, 0x02, 0x00 // [0039] LDTORC 2      # push #2 #
+                                  , 0xA3             // [003C] SUB           # p1 - #2 #
+                                  , 0x60             // [003D] PUSH
+
+                                  , 0x20, 0x04, 0x00 // [003E] LDTORC 4      # fib     #     j = fib (p - 2);
+                                  , 0x80             // [0041] CALL
+                                  , 0x11, 0x02, 0x00 // [0042] SETSP  SP,2   #
+
+                                  , 0x60             // [0045] PUSH
+                                  , 0x30, 0xFC, 0xFF // [0046] LDTORL -4     # push j  #
+                                  , 0x50             // [0049] STORE
+
+                                  , 0x30, 0xFE, 0xFF // [004A] LDTORL -2     # push i  #
+                                  , 0x40             // [004D] FETCH
+                                  , 0x60             // [004E] PUSH
+
+                                  , 0x30, 0xFC, 0xFF // [004F] LDTORL -4     # push j  #
+                                  , 0x40             // [0052] FETCH
+
+                                  , 0xA2             // [0053] ADD           # i + j   #     return i + j;
+                                  , 0x90             // [0054] RET           #         #
+
+                                  , 0x90             // [0055] RET           #         # }
+
+                                  , 0x10, 0x00, 0x00 // [0056] SETSP  FP,0   #         # int main (int param) {
+                                  , 0x30, 0x04, 0x00 // [0059] LDTORL 4      # param   # 
+                                  , 0x40             // [005C] FETCH
+                                  , 0x60             // [005D] PUSH
+
+                                  , 0x20, 0x04, 0x00 // [005E] LDTORC 4      # fib     #    out fib (param);
+                                  , 0x80             // [0061] CALL
+                                  , 0x11, 0x02, 0x00 // [0062] SETSP  SP,2   #
+
+                                  , 0xD0             // [0065] OUT           #         # out ...
+                                  , 0x90             // [0055] RET           #         #     }
+
+
+                                  , 0x00, 0xFE, 0xFF // [0056] SETFP  0xFFFE #
+                                  , 0x20, 0xFE, 0xFF // [0059] LDTORC 0xFFFE # PARAM   #
+                                  , 0x40             // [005C] FETCH
+                                  , 0x60             // [005D] PUSH
+
+                                  , 0x20, 0x56, 0x00 // [005E] LDTORC 0x0056 # main    #
+                                  , 0x80             // [0061] CALL
+                                  , 0xF0             // [0052] HALT          #         #
                                   };
 
-    debug = (argc >= 2 ? atoi (argv[1]) : 0);
+    if (parse_args (argc, argv)) exit (1);
 
-    if (argc >= 3) {
-        ifstream myFile (argv[2], ios::in | ios::binary);
+    debug = vm.count("debug") ? vm["debug"].as<int>() : 0;
+
+    if (vm.count("image")) {
+        ifstream myFile (vm["image"].as<string>(), ios::in | ios::binary);
         if (!myFile.read ((char *)ram2, sizeof (ram2))) {
         }
     }
-    param = (argc >= 4 ? atoi (argv[3]) : 0);
+    param = vm.count("arg") ? vm["arg"].as<int>() : 0;
 
     ram2[0xfffe] =  param       & 0xff;
     ram2[0xffff] = (param >> 8) & 0xff;

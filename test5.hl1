@@ -1,0 +1,55 @@
+int a;
+int b;
+
+int mul2 (int a, int b)
+{
+    int ret;
+
+    while (a != 0) {
+        ret = ret + b;
+        a   = a - 1;
+    };
+    return ret;
+};
+
+int mul (int a, int b)
+{
+    if (a) {
+        return mul (a-1, b) + b;
+    } else {
+        return 0;
+    }
+};
+
+int fac (int n)
+{
+    if (n) {
+        return mul (n, fac (n-1));
+    } else {
+        return 1;
+    };
+};
+
+int fac2 (int n)
+{
+    int j;
+
+    if (n) {
+        j = fac (n-1);
+        return mul (n, j);
+    } else {
+        return 1;
+    };
+};
+
+int dum (int n)
+{
+    return 1+n;
+};
+
+int main (int param)
+{
+    out fac (param);
+
+    return 1;
+};

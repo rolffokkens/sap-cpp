@@ -108,17 +108,19 @@ private:
     ,   R_IR
     ,   R_MAR
     ,   R_MDR
-    ,   R_TL
-    ,   R_TR
+    ,   R_Tl
+    ,   R_Tr
+    ,   R_TOR
     ,   R_ALU
     ,   R_OUT
-    ,   R_SP
     ,   R_FP
+    ,   R_SP
     ,   R_ALU2
     ,   R_ZERO
     ,   R_ONE
     ,   R_NUM
     ,   R_ANY
+    ,   R_FPSP
     };
 
     /****************************************************************************
@@ -134,8 +136,8 @@ private:
     enum InstructionID {
         I_SETFP  = 0
     ,   I_SETSP
-    ,   I_LDTRC
-    ,   I_LDTRL
+    ,   I_LDTORC
+    ,   I_LDTORL
     ,   I_FETCH
     ,   I_STORE
     ,   I_PUSH
@@ -153,6 +155,7 @@ private:
 
     struct InstructionInfo {
         const char *name;
+        char reg;
         char argument;
         char cond;
     };
@@ -184,17 +187,17 @@ private:
      ****************************************************************************/
     class Alu16 : public Register16 {
     private:
-        Register16 &TL, &TR;
+        Register16 &Tl, &Tr;
         FlagsRegister &F;
         char oper, flags;
     public:
         enum Operation { OpNone, OpInd, OpAdd, OpSub };
         static const char *OpNames[];
 
-        Alu16 (const char *_name, InternalBus16 &bus, Register16 &_TL, Register16 &_TR, FlagsRegister &_F)
+        Alu16 (const char *_name, InternalBus16 &bus, Register16 &_Tl, Register16 &_Tr, FlagsRegister &_F)
             : Register16 (_name, bus)
-            , TL(_TL)
-            , TR(_TR)
+            , Tl(_Tl)
+            , Tr(_Tr)
             , F(_F)
         {
             oper = OpNone;
@@ -237,7 +240,8 @@ private:
         char end_instr;
     };
 
-    Register16 TL, TR;
+    Register16 Tl, Tr;
+    Register16 TOR;
     Counter16 SP;
     Register16 FP;
     Ram8 &RAM;
@@ -252,8 +256,8 @@ private:
     static const struct MicroInstruction prefix[];
     static const struct MicroInstruction inst_setfp[];
     static const struct MicroInstruction inst_setsp[];
-    static const struct MicroInstruction inst_ldtrc[];
-    static const struct MicroInstruction inst_ldtrl[];
+    static const struct MicroInstruction inst_ldtorc[];
+    static const struct MicroInstruction inst_ldtorl[];
     static const struct MicroInstruction inst_fetch[];
     static const struct MicroInstruction inst_store[];
     static const struct MicroInstruction inst_push[];
@@ -296,12 +300,16 @@ private:
      */
     void debug_microcode (const struct MicroInstruction *ip, unsigned char ir) const;
 
-    inline unsigned char map_reg (unsigned char reg, unsigned char regid) const
+    inline unsigned char map_reg (unsigned char reg, unsigned char ir) const
     {
-        regid = (regid & 0x0f) % 5;
-        if (reg != CPU16::R_ANY) return reg;
+        if (reg == CPU16::R_FPSP) {
+            return R_FP + (ir & 0x01);
+        };
+        if (reg == CPU16::R_ANY) {
+            return R_FP + ((ir & 0x0f) % 5);
+        };
+        return reg;
 
-        return R_SP + regid;
     };
     void map_cond (unsigned char data, char &zero, char &carry, char &condflags, const char *&name) const;
     /*
@@ -320,10 +328,11 @@ public:
         , MDR ("MDR", bus, MAR, RAM)
         , SP ("SP", bus)
         , FP ("FP", bus)
-        , TL ("TL", bus)
-        , TR ("TR", bus)
-        , ALU  ("ALU", bus, TL, TR, F)
-        , ALU2 ("ALU2", bus, FP, TR, F)
+        , Tl ("Tl", bus)
+        , Tr ("Tr", bus)
+        , TOR ("TOR", bus)
+        , ALU  ("ALU", bus, Tl, Tr, F)
+        , ALU2 ("ALU2", bus, FP, Tr, F)
         , ZERO ("ZERO", bus)
         , ONE ("ONE", bus)
     {

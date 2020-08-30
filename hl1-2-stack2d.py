@@ -2,33 +2,34 @@ import sys
 import re
 from enum import Enum
 
-I_SETFP   = 0x00
-I_SETSP   = 0x10
-I_LDTRC   = 0x20
-I_LDTRL   = 0x30
-I_FETCH   = 0x40
-I_STORE   = 0x50
-I_PUSH    = 0x60
-I_POP     = 0x70
-I_CALL    = 0x80
-I_RET     = 0x90
-I_ADD     = 0xA2
-I_SUB     = 0xA3
-I_CMP     = 0xB0
-I_CMP_LT  = 0xB9
-I_CMP_LE  = 0xBA
-I_CMP_EQ  = 0xBB
-I_CMP_GE  = 0xBC
-I_CMP_GT  = 0xBD
-I_CMP_NE  = 0xBE
-I_SWAP    = 0xC0
-I_OUT     = 0xD0
-I_JUMP    = 0xE0
-I_JUMP_Z  = 0xE4
-I_JUMP_NZ = 0xE5
-I_JUMP_C  = 0xE6
-I_JUMP_NC = 0xE7
-I_HALT    = 0xF0
+I_SETFP    = 0x00
+I_SETSP_FP = 0x10
+I_SETSP_SP = 0x11
+I_LDTORC   = 0x20
+I_LDTORL   = 0x30
+I_FETCH    = 0x40
+I_STORE    = 0x50
+I_PUSH     = 0x60
+I_POP      = 0x70
+I_CALL     = 0x80
+I_RET      = 0x90
+I_ADD      = 0xA2
+I_SUB      = 0xA3
+I_CMP      = 0xB0
+I_CMP_LT   = 0xB9
+I_CMP_LE   = 0xBA
+I_CMP_EQ   = 0xBB
+I_CMP_GE   = 0xBC
+I_CMP_GT   = 0xBD
+I_CMP_NE   = 0xBE
+I_SWAP     = 0xC0
+I_OUT      = 0xD0
+I_JUMP     = 0xE0
+I_JUMP_Z   = 0xE4
+I_JUMP_NZ  = 0xE5
+I_JUMP_C   = 0xE6
+I_JUMP_NC  = 0xE7
+I_HALT     = 0xF0
 
 class Token(Enum):
     EOF     =  0
@@ -182,7 +183,7 @@ def compile_expr (scope, offset):
             if t != Token.RRBRACK:
                 raise Exception ("Unexpected token \"%s\" at line %d, expected \")\"" % (w, linecnt))
         elif t == Token.INT:
-            gen_16bit_code (I_LDTRC, w)
+            gen_16bit_code (I_LDTORC, w)
         elif t == Token.IDENT:
             typ = None
             for i in range (scope, -1, -1):
@@ -192,10 +193,10 @@ def compile_expr (scope, offset):
             if typ == None:
                 raise Exception ("Reference to unknown identifier \"%s\" at line %d" % (w, linecnt))
             if typ == Ident.VAR:
-                instr = I_LDTRC if i == 0 else I_LDTRL
-                addr  = atr     if i == 0 else atr + offset
+                instr = I_LDTORC if i == 0 else I_LDTORL
+                addr  = atr      if i == 0 else atr + offset
                 gen_16bit_code (instr, addr)
-                code.append (I_FETCH           )
+                code.append (I_FETCH)
             else:
                 (addr, argsize) = atr
                 next_token ()
@@ -214,8 +215,9 @@ def compile_expr (scope, offset):
                         break
                 if t != Token.RRBRACK:
                     raise Exception ("Unexpected token \"%s\" at line %d, expected \")\"" % (w, linecnt))
-                gen_16bit_code (I_LDTRC, addr)
+                gen_16bit_code (I_LDTORC, addr)
                 code.append (I_CALL)
+                gen_16bit_code (I_SETSP_SP, argsize-4)
         else:
             raise Exception ("Unexpected token \"%s\" in expression at line %d" % (w, linecnt))
         if op:
@@ -260,14 +262,14 @@ def compile_stmt_while (offset):
     next_token ()
 
     code.append (I_PUSH)
-    gen_16bit_code (I_LDTRC, 0)
+    gen_16bit_code (I_LDTORC, 0)
     code.append (I_CMP)
     brk = [ len (code) + 1 ]
-    gen_16bit_code (I_LDTRC, 0)
+    gen_16bit_code (I_LDTORC, 0)
     code.append (I_JUMP_Z)
     compile_stmt (offset)
 
-    gen_16bit_code (I_LDTRC, loop_addr)
+    gen_16bit_code (I_LDTORC, loop_addr)
     code.append (I_JUMP)
 
     for addr in brk:
@@ -289,17 +291,17 @@ def compile_stmt_if (offset):
     next_token ()
 
     code.append (I_PUSH)
-    gen_16bit_code (I_LDTRC, 0)
+    gen_16bit_code (I_LDTORC, 0)
     code.append (I_CMP)
     else_ptr = len (code) + 1
-    gen_16bit_code (I_LDTRC, 0)
+    gen_16bit_code (I_LDTORC, 0)
     code.append (I_JUMP_Z)
     compile_stmt (offset)
 
     (t, w) = token
     if t == Token.ELSE:
         then_ptr = len (code) + 1
-        gen_16bit_code (I_LDTRC, 0)
+        gen_16bit_code (I_LDTORC, 0)
         code.append (I_JUMP)
         else_addr = len(code)
 
@@ -341,8 +343,8 @@ def compile_stmt (offset):
         if typ != Ident.VAR:
             raise Exception ("Reference to unknown variable \"%s\" at line %d" % (w, linecnt))
 
-        instr = I_LDTRC if i == 0 else I_LDTRL
-        addr  = atr     if i == 0 else atr + offset
+        instr = I_LDTORC if i == 0 else I_LDTORL
+        addr  = atr      if i == 0 else atr + offset
 
         next_token ()
         (t, w) = token
@@ -403,7 +405,7 @@ def compile_func_decl (ident):
 
     compile_decl_list (1)
     fsize = memtop[1] + argoffset
-    gen_16bit_code (I_SETSP, fsize)
+    gen_16bit_code (I_SETSP_FP, fsize)
     compile_stmt_list (argoffset)
     code.append (I_RET)
 
@@ -412,6 +414,8 @@ def compile_func_decl (ident):
         raise Exception ("Unexpected token \"%s\" at line %d, expected \"}\"" % (w, linecnt))
     next_token ()
     (t, w) = token
+
+    print (idents[1], file=sys.stderr)
 
 def compile_decl (scope):
     global memtop
@@ -470,14 +474,14 @@ def main():
         raise Exception ("Missing main() function")
     (addr, stacksiz) = atr
     gen_16bit_code (I_SETFP, memtop[0])
-    gen_16bit_code (I_LDTRC, 0xfffe)
+    gen_16bit_code (I_LDTORC, 0xfffe)
     code.append (I_FETCH)
     code.append (I_PUSH)
-    gen_16bit_code (I_LDTRC, addr)
+    gen_16bit_code (I_LDTORC, addr)
     code.append (I_CALL)
     code.append (I_HALT)
 
-    code[0] = I_LDTRC
+    code[0] = I_LDTORC
     set_16bit_word (1, jump)
     code[3] = I_JUMP
 

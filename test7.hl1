@@ -1,0 +1,16 @@
+int fib (int p) {
+    int i;
+    int j;
+
+    if (p < 2) {
+        return p;
+    };
+    i = fib (p - 1);
+    j = fib (p - 2);
+
+    return i + j;
+};
+
+int main (int param) {
+    out fib (param);
+};
